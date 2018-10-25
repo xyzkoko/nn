@@ -24,7 +24,7 @@ Route::group(['namespace' => 'Game'], function(){
 });
 
 Route::group(['namespace' => 'User'], function(){
-    Route::post('/user/login', 'UserController@login');
+    Route::get('/user/login', 'UserController@login');
     Route::get('/user/gameInfo', 'UserController@getGameInfo');
     Route::get('/user/userInfo', 'UserController@getUserInfo');
     Route::post('/user/bets', 'UserController@addBets');

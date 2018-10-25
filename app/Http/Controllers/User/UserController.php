@@ -14,14 +14,23 @@ class UserController extends Controller
     public function login(Request $request){
         // 微信登录
         $key = "USER_INFO";
-        $userId = rand(0,99999);
-        $request->session()->put('userId', $userId);
-        $userInfo = new UserInfo();
-        $userInfo->id = $userId;
-        $userInfo->nick = "nick";
-        $userInfo->icon = "icon";
-        $userInfo->chips = 10000;
-        Redis::set($key."|".$userId, json_encode($userInfo));
+        $userId = $request->session()->get('userId');
+        if(blank($userId)){     // 新用户
+            $userId = rand(0,99999);
+            $request->session()->put('userId', $userId);
+            $userInfo = new UserInfo();
+            $userInfo->id = $userId;
+            $userInfo->nick = "nick";
+            $userInfo->icon = "icon";
+            $userInfo->chips = 10000;
+            Redis::set($key."|".$userId,21600, json_encode($userInfo));
+        }else{
+            $userInfo = json_decode(Redis::get($key."|".$userId),true);
+            if($userInfo == null){
+                $request->session()->flush();
+                return $this->login($request);
+            }
+        }
         return response(json_encode($userInfo));
     }
 
@@ -46,7 +55,7 @@ class UserController extends Controller
             }
         }
         $gameInfo["nowTime"] = time();
-        Redis::set($key2, json_encode($gameInfo));
+        Redis::set($key2,21600, json_encode($gameInfo));
         return response($gameInfo);
     }
 
@@ -101,7 +110,7 @@ class UserController extends Controller
         $bets[$betNo] += $betVal;
         Redis::hset($key3,$userId,json_encode($bets));
         $userInfo["chips"] -= $betVal;
-        Redis::set($key2."|".$userId,json_encode($userInfo));
+        Redis::set($key2."|".$userId,21600,json_encode($userInfo));
         return "success!";
     }
 

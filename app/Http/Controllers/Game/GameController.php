@@ -152,8 +152,8 @@ class GameController extends Controller
             }
             $userInfo["chips"] += $result;
             Redis::set($key2."|".$userId, json_encode($userInfo));
-            return $allResult;
         }
+        return $allResult;
     }
 
     /*算分*/
