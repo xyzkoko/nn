@@ -25,16 +25,14 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // 生成牌组
         $schedule->call(function () {
             $gameController = new GameController();
             $gameController->addGameList();
-        })->daily()->sendOutputTo("schedule.log");
-        // 开始游戏
+        })->daily();      // 生成牌组
         $schedule->call(function () {
             $gameController = new GameController();
-            $gameController->addGameList();
-        })->cron('* 3 * * *')->sendOutputTo("schedule.log");
+            $gameController->startGame();
+        })->cron('3 * * * *');        // 开始游戏
     }
 
     /**
