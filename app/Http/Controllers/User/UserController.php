@@ -111,7 +111,7 @@ class UserController extends Controller
         Redis::hset($key3,$userId,json_encode($bets));
         $userInfo["chips"] -= $betVal;
         Redis::set($key2."|".$userId,json_encode($userInfo));
-        return "success!";
+        return $this->getBets($request);
     }
 
     /*翻倍*/
@@ -140,6 +140,6 @@ class UserController extends Controller
         }
         $bets["double"] = $double;
         Redis::hset($key3,$userId,json_encode($bets));
-        return "success!";
+        return $this->getBets($request);
     }
 }
