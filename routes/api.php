@@ -20,6 +20,7 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 Route::group(['namespace' => 'Game'], function(){
     Route::post('/game/start', 'GameController@startGame');
     Route::post('/game/add', 'GameController@addGameList');
+    Route::get('/game/add', 'GameController@addTodayGameList');
 });
 
 Route::group(['namespace' => 'User'], function(){

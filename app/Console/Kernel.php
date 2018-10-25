@@ -2,6 +2,7 @@
 
 namespace App\Console;
 
+use App\Http\Controllers\game\GameController;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
@@ -24,8 +25,16 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // $schedule->command('inspire')
-        //          ->hourly();
+        // 生成牌组
+        $schedule->call(function () {
+            $gameController = new GameController();
+            $gameController->addGameList();
+        })->daily()->sendOutputTo("schedule.log");
+        // 开始游戏
+        $schedule->call(function () {
+            $gameController = new GameController();
+            $gameController->addGameList();
+        })->cron('* 3 * * *')->sendOutputTo("schedule.log");
     }
 
     /**

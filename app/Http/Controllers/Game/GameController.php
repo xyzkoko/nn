@@ -77,6 +77,24 @@ class GameController extends Controller
         echo 'success';
     }
 
+    /*生成今天的牌组*/
+    public function addTodayGameList()
+    {
+        $constant = new Constant();
+        $data = date("Ymd");
+        for($i = 1;$i <= 480;$i++){
+            $gameCards = new GameCards;
+            $gameCards->id = $data.'|'.$i;
+            $cardIndexs = $constant::CARDINDEXS;      // 获取总牌组
+            shuffle($cardIndexs);     // 随机
+            $cardIndexs = array_chunk($cardIndexs,5);       // 分割
+            $cardIndexs = array_slice($cardIndexs,0,10);        // 取前十个
+            $gameCards->cards = json_encode($cardIndexs);
+            $gameCards->save();
+        }
+        echo 'success';
+    }
+
     /*算点*/
     private function getPoint($cards){
         for($i=0;$i<count($cards);$i++) {
