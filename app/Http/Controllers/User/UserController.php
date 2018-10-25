@@ -20,7 +20,7 @@ class UserController extends Controller
         $userInfo->id = $userId;
         $userInfo->nick = "nick";
         $userInfo->icon = "icon";
-        $userInfo->chips = 9999;
+        $userInfo->chips = 10000;
         Redis::set($key."|".$userId, json_encode($userInfo));
         return response(json_encode($userInfo));
     }
