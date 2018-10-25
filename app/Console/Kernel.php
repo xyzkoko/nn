@@ -32,7 +32,7 @@ class Kernel extends ConsoleKernel
         $schedule->call(function () {
             $gameController = new GameController();
             $gameController->startGame();
-        })->everyFiveMinutes();        // 开始游戏
+        })->cron('*/3 * * * *');        // 开始游戏
     }
 
     /**
