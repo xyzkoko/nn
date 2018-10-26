@@ -138,7 +138,7 @@ class GameController extends Controller
                 }
             }
             if($result > 0){        // 赢了
-                $allResult -= abs($result - $userBets);
+                $allResult -= $result;
             }elseif ($result < 0){      // 输了
                 $allResult += abs($result);
             }
@@ -149,6 +149,8 @@ class GameController extends Controller
             $userInfo = json_decode(Redis::get($key2."|".$userId),true);
             if($result<0){      // 多扣输的筹码
                 $result = $userBets - abs($result);
+            }elseif($result>0){      // 赢了返还筹码
+                $result = $userBets + $result;
             }
             $userInfo["chips"] += $result;
             Redis::set($key2."|".$userId, json_encode($userInfo));
