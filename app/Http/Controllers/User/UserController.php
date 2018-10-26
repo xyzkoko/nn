@@ -54,6 +54,11 @@ class UserController extends Controller
         }
         $key2 = "GAME_INFO";       // 当局信息
         $gameInfo = json_decode(Redis::get($key2),true);
+        if($gameInfo == null){
+            $response->resutt = false;
+            $response->message = "牌局错误";
+            return json_encode($response);
+        }
         for($i=0;$i<count($gameInfo["position"]);$i++){
             if($gameInfo["position"][$i]["nickname"] == $userInfo["nickname"]){
                 break;
