@@ -18,14 +18,18 @@ class UserController extends Controller
         $key = "USER_INFO";
         $userId = $request->session()->get('userId');
         if(blank($userId)){     // 新用户
-            $userId = rand(0,99999);
-            $request->session()->put('userId', $userId);
-            $userInfo = new UserInfo();
-            $userInfo->id = $userId;
-            $userInfo->nick = "nick";
-            $userInfo->icon = "icon";
-            $userInfo->chips = 10000;
-            Redis::set($key."|".$userId, json_encode($userInfo));
+            $openid = rand(0,99999);
+            $userInfo = UserInfo::where('openid', $openid)->first();
+            if(blank($userInfo)) {
+                $userInfo = new UserInfo();
+                $userInfo->openid = $openid;
+                $userInfo->nickname = "nick";
+                $userInfo->headimgurl = "icon";
+                $userInfo->chips = 10000;
+                $userInfo->save();
+            }
+            $request->session()->put('userId', $userInfo->id);
+            Redis::set($key."|".$userInfo->id, json_encode($userInfo));
         }else{
             $userInfo = json_decode(Redis::get($key."|".$userId),true);
             if($userInfo == null){
