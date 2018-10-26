@@ -105,7 +105,7 @@ class UserController extends Controller
         if(blank($gameInfo) || $gameInfo['status'] == 1){
             $response->resutt = false;
             $response->message = "该局已结算";
-            return $response;
+            return json_encode($response);
         }
         $key2 = "USER_INFO";       // 玩家信息
         $userId = $request->session()->get('userId');
