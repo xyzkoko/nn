@@ -55,12 +55,12 @@ class UserController extends Controller
         $key2 = "GAME_INFO";       // 当局信息
         $gameInfo = json_decode(Redis::get($key2),true);
         for($i=0;$i<count($gameInfo["position"]);$i++){
-            if($gameInfo["position"][$i]["nick"] == $userInfo["nick"]){
+            if($gameInfo["position"][$i]["nickname"] == $userInfo["nickname"]){
                 break;
             }
-            if(blank($gameInfo["position"][$i]["nick"])){
-                $gameInfo["position"][$i]["nick"] = $userInfo["nick"];
-                $gameInfo["position"][$i]["icon"] = $userInfo["icon"];
+            if(blank($gameInfo["position"][$i]["nickname"])){
+                $gameInfo["position"][$i]["nickname"] = $userInfo["nickname"];
+                $gameInfo["position"][$i]["headimgurl"] = $userInfo["headimgurl"];
                 break;
             }
         }
