@@ -71,7 +71,12 @@ class UserController extends Controller
         $response = new ResponseData();
         $key = "USER_INFO";       // 玩家信息
         $userId = $request->session()->get('userId');
-        $userInfo = Redis::get($key."|".$userId);
+        $userInfo = json_decode(Redis::get($key."|".$userId),true);
+        if($userInfo == null){
+            $response->resutt = false;
+            $response->message = "请先登录";
+            return json_encode($response);
+        }
         $response->data = $userInfo;
         return json_encode($response);
     }
