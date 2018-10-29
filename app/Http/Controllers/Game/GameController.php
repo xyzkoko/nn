@@ -51,6 +51,7 @@ class GameController extends Controller
         $gameInfo->status = 2;
         Redis::set($key2, json_encode($gameInfo));      // 更新Redis
         $allResult = $this->result($gameInfo);     // 总收入
+        $gameCards->status = 2;
         $gameCards->result = $allResult;        // 更新数据库
         $gameCards->save();
         return "success";
