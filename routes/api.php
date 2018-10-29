@@ -30,6 +30,7 @@ Route::group(['namespace' => 'User'], function(){
     Route::post('/user/bets', 'UserController@addBets');
     Route::post('/user/double', 'UserController@putDouble');
     Route::get('/user/bets', 'UserController@getBets');
+    Route::get('/user/time', 'UserController@getTime');
 });
 
 Route::group(['namespace' => 'Admin'], function(){

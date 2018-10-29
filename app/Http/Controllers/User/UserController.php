@@ -69,7 +69,7 @@ class UserController extends Controller
                 break;
             }
         }
-        $gameInfo["nowTime"] = time();
+        $gameInfo["nowTime"] = $this->getMillisecond();
         Redis::set($key2, json_encode($gameInfo));
         $response->data = $gameInfo;
         return json_encode($response);
@@ -116,9 +116,9 @@ class UserController extends Controller
         }
         $key = "GAME_INFO";       // 当局信息
         $gameInfo = json_decode(Redis::get($key),true);
-        if(blank($gameInfo) || $gameInfo['status'] == 1){
+        if(blank($gameInfo) || $gameInfo['status'] != 1){
             $response->resutt = false;
-            $response->message = "该局已结算";
+            $response->message = "非下注时间";
             return json_encode($response);
         }
         $key2 = "USER_INFO";       // 玩家信息
@@ -159,9 +159,9 @@ class UserController extends Controller
         }
         $key = "GAME_INFO";       // 当局信息
         $gameInfo = json_decode(Redis::get($key),true);
-        if(blank($gameInfo) || $gameInfo['status'] == 1){
+        if(blank($gameInfo) || $gameInfo['status'] != 1){
             $response->resutt = false;
-            $response->message = "该局已结算";
+            $response->message = "非下注时间";
             return json_encode($response);
         }
         $key2 = "USER_INFO";       // 玩家信息
@@ -182,5 +182,18 @@ class UserController extends Controller
         $bets["double"] = $double;
         Redis::hset($key3,$userId,json_encode($bets));
         return $this->getBets($request);
+    }
+
+    /*获取系统时间戳（毫秒）*/
+    public function getTime(){
+        $response = new ResponseData();
+        $response->data = $this->getMillisecond();
+        return json_encode($response);
+    }
+
+    // 毫秒级时间戳
+    public function getMillisecond() {
+        list($t1, $t2) = explode(' ', microtime());
+        return (float)sprintf('%.0f',(floatval($t1)+floatval($t2))*1000);
     }
 }

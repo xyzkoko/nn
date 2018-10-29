@@ -4,9 +4,11 @@ namespace App\Http\Controllers\game;
 
 use Illuminate\Support\Facades\Redis;
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\user\UserController;
 use App\Model\GameCards;
 use App\Model\GameInfo;
 use App\Model\Constant;
+
 class GameController extends Controller
 {
     /*每三分钟运行一次进行游戏*/
@@ -30,31 +32,26 @@ class GameController extends Controller
         $key2 = "GAME_INFO";       // 当局信息
         $gameInfo = new GameInfo;
         $gameInfo->gameId = $gameId;
-        $gameInfo->startTime = time();
-        Redis::set($key2, json_encode($gameInfo));
+        $gameInfo->startTime = UserController::getMillisecond();
+        Redis::set($key2, json_encode($gameInfo));            // 更新Redis
         $key3 = "BETS_INFO";       // 下注信息
         Redis::del($key3);
-        sleep(130);
-        // test
-/*        $gameId = "20181024|3";
-        $gameInfo = new GameInfo;
-        $gameInfo->gameId = $gameId;
-        $key2 = "GAME_INFO";*/
-        // open阶段
+        sleep(35);      // 等待
+        // 下注阶段
+        $gameInfo->status = 1;
+        Redis::set($key2, json_encode($gameInfo));            // 更新Redis
+        sleep(70);      // 等待
+        // 结算阶段
         $gameCards = GameCards::find($gameId);
         $cards = json_decode($gameCards["cards"],true);
         for($i=0;$i<count($gameInfo->position);$i++){
             $gameInfo->position[$i]["cards"] = json_encode($cards[$i]);
             $gameInfo->position[$i]["point"] = $this->getPoint($cards[$i]);
         }
-        $gameInfo->status = 1;
-        $gameInfo->nowTime = time();
-        Redis::set($key2, json_encode($gameInfo));
-        // 结算
+        $gameInfo->status = 2;
+        Redis::set($key2, json_encode($gameInfo));      // 更新Redis
         $allResult = $this->result($gameInfo);     // 总收入
-        // 更新数据库
-        $gameCards->status = 1;
-        $gameCards->result = $allResult;
+        $gameCards->result = $allResult;        // 更新数据库
         $gameCards->save();
         return "success";
     }

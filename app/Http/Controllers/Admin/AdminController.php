@@ -25,7 +25,7 @@ class AdminController extends Controller
         $response = new ResponseData();
         $gameId  = $request->input('gameId');
         $gameCards = GameCards::where('id',$gameId)->first();
-        if($gameCards->status == 1){        // 已结算
+        if($gameCards->status == 2){        // 已结算
             $response->resutt = false;
             $response->message = "该局已结算!";
             return json_encode($response);;
