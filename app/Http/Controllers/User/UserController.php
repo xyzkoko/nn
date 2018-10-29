@@ -48,14 +48,14 @@ class UserController extends Controller
         $userId = $request->session()->get('userId');
         $userInfo = json_decode(Redis::get($key."|".$userId),true);
         if($userInfo == null){
-            $response->resutt = false;
+            $response->result = false;
             $response->message = "请先登录";
             return json_encode($response);
         }
         $key2 = "GAME_INFO";       // 当局信息
         $gameInfo = json_decode(Redis::get($key2),true);
         if($gameInfo == null){
-            $response->resutt = false;
+            $response->result = false;
             $response->message = "牌局错误";
             return json_encode($response);
         }
@@ -82,7 +82,7 @@ class UserController extends Controller
         $userId = $request->session()->get('userId');
         $userInfo = json_decode(Redis::get($key."|".$userId),true);
         if($userInfo == null){
-            $response->resutt = false;
+            $response->result = false;
             $response->message = "请先登录";
             return json_encode($response);
         }
@@ -109,15 +109,16 @@ class UserController extends Controller
         $response = new ResponseData();
         $betNo = $request->input('betNo');
         $betVal = $request->input('betVal');
-        if(blank($betNo) || blank($betVal) || $betNo < 1 || $betNo > 9 || $betVal < 1){
-            $response->resutt = false;
+        $double = $request->input('double');
+        if(!is_array($betNo) || !is_array($betVal) || blank($double) || count($betNo) != count($betVal) || 0>$double || 1<$double){
+            $response->result = false;
             $response->message = "参数错误";
             return json_encode($response);
         }
         $key = "GAME_INFO";       // 当局信息
         $gameInfo = json_decode(Redis::get($key),true);
         if(blank($gameInfo) || $gameInfo['status'] != 1){
-            $response->resutt = false;
+            $response->result = false;
             $response->message = "非下注时间";
             return json_encode($response);
         }
@@ -125,13 +126,8 @@ class UserController extends Controller
         $userId = $request->session()->get('userId');
         $userInfo = json_decode(Redis::get($key2."|".$userId),true);
         if($userInfo == null){
-            $response->resutt = false;
+            $response->result = false;
             $response->message = "请先登录";
-            return json_encode($response);
-        }
-        if($betVal > $userInfo['chips']){
-            $response->resutt = false;
-            $response->message = "筹码不足";
             return json_encode($response);
         }
         // 保存下注信息
@@ -140,16 +136,37 @@ class UserController extends Controller
         if(blank($bets)){
             $constant = new Constant();
             $bets = $constant::BETS;
+        }else{      // 只能下一次注
+            return $this->getBets($request);
         }
-        $bets[$betNo] += $betVal;
+        $allBetVal = 0;
+        for($i=0;$i<count($betNo);$i++){
+            if(1>$betNo[$i] || 9<$betNo[$i] || !is_numeric($betVal[$i])){
+                $response->result = false;
+                $response->message = "参数错误";
+                return json_encode($response);
+            }
+            $allBetVal += $betVal[$i];
+            $bets[$betNo[$i]] += $betVal[$i];
+        }
+        $bets["double"] = $double;
+        if($double == 1 && ($allBetVal*4 > $userInfo['chips'])){
+            $response->result = false;
+            $response->message = "筹码不足";
+            return json_encode($response);
+        }elseif($allBetVal > $userInfo['chips']){
+            $response->result = false;
+            $response->message = "筹码不足";
+            return json_encode($response);
+        }
         Redis::hset($key3,$userId,json_encode($bets));
-        $userInfo["chips"] -= $betVal;
+        $userInfo["chips"] -= $allBetVal;
         Redis::set($key2."|".$userId,json_encode($userInfo));
         return $this->getBets($request);
     }
 
     /*翻倍*/
-    public function putDouble(Request $request){
+    /*public function putDouble(Request $request){
         $response = new ResponseData();
         $double = $request->input('double');
         if(blank($double) || $double < 0 || $double > 1){
@@ -182,12 +199,13 @@ class UserController extends Controller
         $bets["double"] = $double;
         Redis::hset($key3,$userId,json_encode($bets));
         return $this->getBets($request);
-    }
+    }*/
 
     /*获取系统时间戳（毫秒）*/
     public function getTime(){
         $response = new ResponseData();
-        $response->data = $this->getMillisecond();
+        $data["time"] =  $this->getMillisecond();
+        $response->data = $data;
         return json_encode($response);
     }
 

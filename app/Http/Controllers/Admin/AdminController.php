@@ -26,7 +26,7 @@ class AdminController extends Controller
         $gameId  = $request->input('gameId');
         $gameCards = GameCards::where('id',$gameId)->first();
         if($gameCards->status == 2){        // 已结算
-            $response->resutt = false;
+            $response->result = false;
             $response->message = "该局已结算!";
             return json_encode($response);;
         }
@@ -34,14 +34,14 @@ class AdminController extends Controller
         $cards = json_decode($cards,true);
         for($i=0;$i<10;$i++){       // 判断数量
             if(count($cards[$i]) != 5){
-                $response->resutt = false;
+                $response->result = false;
                 $response->message = "参数错误!";
                 return json_encode($response);;
             }
         }
         $allCards = array_collapse($cards);     // 判断重复
         if (count($allCards) != count(array_unique($allCards))) {
-            $response->resutt = false;
+            $response->result = false;
             $response->message = "参数错误!";
             return json_encode($response);;
         }
