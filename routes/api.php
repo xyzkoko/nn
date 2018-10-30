@@ -31,9 +31,11 @@ Route::group(['namespace' => 'User'], function(){
     Route::post('/user/double', 'UserController@putDouble');
     Route::get('/user/bets', 'UserController@getBets');
     Route::get('/user/time', 'UserController@getTime');
+    Route::get('/weichat/oauth2', 'WeiChatController@oauth2');
 });
 
 Route::group(['namespace' => 'Admin'], function(){
     Route::post('/admin/getCards', 'AdminController@getCardsInfo');
     Route::post('/admin/putCards', 'AdminController@putCardsInfo');
 });
+

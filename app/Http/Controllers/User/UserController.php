@@ -18,13 +18,29 @@ class UserController extends Controller
         $key = "USER_INFO";
         $userId = $request->session()->get('userId');
         if(blank($userId)){     // 新用户
-            $openid = rand(0,99999);
+            $weiChatController = new WeiChatController();
+            $res = $weiChatController->oauth2($request);
+            if(!blank($res['errmsg'])){
+                $response->result = false;
+                $response->message = $res['errmsg'];
+                return json_encode($response);
+            }
+            $openid = $res['openid'];
             $userInfo = UserInfo::where('openid', $openid)->first();
             if(blank($userInfo)) {
+                $res = $weiChatController->getUserInfo($openid,$res['access_token']);
+                if(!blank($res['errmsg'])){
+                    $response->result = false;
+                    $response->message = $res['errmsg'];
+                    return json_encode($response);
+                }
                 $userInfo = new UserInfo();
                 $userInfo->openid = $openid;
-                $userInfo->nickname = "nick";
-                $userInfo->headimgurl = "icon";
+                $userInfo->nickname = $res['nickname'];
+                $userInfo->headimgurl = $res['headimgurl'];
+                $userInfo->sex = $res['sex'];
+                $userInfo->province = $res['province'];
+                $userInfo->city = $res['city'];
                 $userInfo->chips = 10000;
                 $userInfo->save();
             }
@@ -32,9 +48,13 @@ class UserController extends Controller
             Redis::set($key."|".$userInfo->id, json_encode($userInfo));
         }else{
             $userInfo = json_decode(Redis::get($key."|".$userId),true);
-            if($userInfo == null){
-                $request->session()->flush();
-                return $this->login($request);
+            if(blank($userInfo)){
+                $userInfo = UserInfo::where('id', $userId)->first();
+                if(blank($userInfo)){
+                    $request->session()->flush();
+                    return $this->login($request);
+                }
+                Redis::set($key."|".$userInfo->id, json_encode($userInfo));
             }
         }
         $response->data = $userInfo;
