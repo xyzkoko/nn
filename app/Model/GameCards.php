@@ -10,5 +10,4 @@ class GameCards extends Model
 
     public $keyType = 'string';
     public $incrementing = false;
-    public $timestamps = false;
 }
