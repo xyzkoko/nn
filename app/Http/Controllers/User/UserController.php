@@ -14,6 +14,34 @@ class UserController extends Controller
     /*登录*/
     public function login(Request $request){
         $response = new ResponseData();
+        // 测试登录
+        $key = "USER_INFO";
+        $userId = $request->session()->get('userId');
+        if(blank($userId)) {     // 新用户
+            $userInfo = new UserInfo();
+            $userInfo->openid = mt_rand(100000,999999);
+            $userInfo->nickname = "nickname";
+            $userInfo->headimgurl = "headimgurl";
+            $userInfo->sex = "0";
+            $userInfo->province = "province";
+            $userInfo->city = "city";
+            $userInfo->chips = 10000;
+            $userInfo->save();
+            $request->session()->put('userId', $userInfo->id);
+            Redis::set($key."|".$userInfo->id, json_encode($userInfo));
+        }else{
+            $userInfo = json_decode(Redis::get($key."|".$userId),true);
+            if(blank($userInfo)){
+                $userInfo = UserInfo::where('id', $userId)->first();
+                if(blank($userInfo)){
+                    $request->session()->flush();
+                    return $this->login($request);
+                }
+                Redis::set($key."|".$userInfo->id, json_encode($userInfo));
+            }
+        }
+        $response->data = $userInfo;
+        return json_encode($response);exit;
         // 微信登录
         $key = "USER_INFO";
         $userId = $request->session()->get('userId');

@@ -113,21 +113,21 @@ class GameController extends Controller
 
     /*结算*/
     private function result($gameInfo){
-        $key = "BETS_INFO";       // 玩家信息
+        $key = "BETS_INFO";       // 玩家下注信息
         $allBets = Redis::hgetall($key);
-        $bankerPoint = $gameInfo->position[0]["point"];
-        $allResult = 0;
+        $bankerPoint = $gameInfo->position[0]["point"];     // 庄家点数
+        $bankerResult = 0;      // 庄家输赢
         foreach($allBets as $userId=>$value){
-            $result = 0;        // 用户输赢
+            $result = 0;        // 玩家输赢
             $value = json_decode($value,true);
             $double = $value["double"];
-            $userBets = 0;      // 用户下注
+            $betnum = 0;      // 玩家下注数
             for($i=1;$i<=9;$i++){
                 $playerPoint = $gameInfo->position[$i]["point"];
                 if($value[$i] == 0){
                     continue;
                 }
-                $userBets += $value[$i];
+                $betnum += $value[$i];
                 // 比大小
                 if($playerPoint > $bankerPoint){      // win
                     $result += $this->getResult($playerPoint,$double,$value[$i]);
@@ -136,9 +136,9 @@ class GameController extends Controller
                 }
             }
             if($result > 0){        // 赢了
-                $allResult -= $result;
+                $bankerResult -= $result;
             }elseif ($result < 0){      // 输了
-                $allResult += abs($result);
+                $bankerResult += abs($result);
             }
             $value["result"] = $result;
             Redis::hset($key,$userId,json_encode($value));
@@ -146,14 +146,14 @@ class GameController extends Controller
             $key2 = "USER_INFO";       // 玩家信息
             $userInfo = json_decode(Redis::get($key2."|".$userId),true);
             if($result<0){      // 多扣输的筹码
-                $result = $userBets - abs($result);
+                $result = $betnum - abs($result);
             }elseif($result>0){      // 赢了返还筹码
-                $result = $userBets + $result;
+                $result = $betnum + $result;
             }
             $userInfo["chips"] += $result;
             Redis::set($key2."|".$userId, json_encode($userInfo));
         }
-        return $allResult;
+        return $bankerResult;
     }
 
     /*算分*/
