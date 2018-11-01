@@ -35,6 +35,7 @@ class GameController extends Controller
         $gameInfo = new GameInfo;
         $gameInfo->gameId = $gameId;
         $gameInfo->startTime = UserController::getMillisecond();
+        $gameInfo->status = 1;      // TODO 方便下注测试
         Redis::set($key2, json_encode($gameInfo));            // 更新Redis
         $key3 = "BETS_INFO";       // 下注信息
         Redis::del($key3);
