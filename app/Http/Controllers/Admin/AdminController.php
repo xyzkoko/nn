@@ -14,8 +14,9 @@ class AdminController extends Controller
     /*查询日期所有牌组列表*/
     public function getCardsInfo(Request $request){
         $response = new ResponseData();
-        $date  = $request->input('date');       // 查询日期
-        $gameCards = GameCards::where('id','like',$date.'%')->get();
+        $startDate  = $request->input('startDate');       // 查询开始日期|001
+        $endDate  = $request->input('endDate');       // 查询结束日期|460
+        $gameCards = GameCards::whereBetween('id', [$startDate, $endDate])->get();
         $response->data = $gameCards;
         return json_encode($response);
     }

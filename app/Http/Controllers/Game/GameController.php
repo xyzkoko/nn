@@ -8,6 +8,7 @@ use App\Http\Controllers\user\UserController;
 use App\Model\GameCards;
 use App\Model\GameInfo;
 use App\Model\Constant;
+use App\Model\UserBet;
 
 class GameController extends Controller
 {
@@ -26,6 +27,7 @@ class GameController extends Controller
                 $num = $pieces[1] + 1;
             }
         }
+        $num = sprintf("%03d", $num);       // 补齐3位
         $gameId = date('Ymd').'|'.$num;
         Redis::set($key, $gameId);      // 更新当局ID
         // 准别阶段
@@ -50,9 +52,10 @@ class GameController extends Controller
         }
         $gameInfo->status = 2;
         Redis::set($key2, json_encode($gameInfo));      // 更新Redis
-        $allResult = $this->result($gameInfo);     // 总收入
+        $result = $this->result($gameInfo);     // 总收入
         $gameCards->status = 2;
-        $gameCards->result = $allResult;        // 更新数据库
+        $gameCards->pot = $result['pot'];      // 总下注数
+        $gameCards->result = $result['bankerResult'];        // 庄家输赢
         $gameCards->save();
         return "success";
     }
@@ -64,7 +67,7 @@ class GameController extends Controller
         $data = date("Ymd",strtotime("+1 day"));
         for($i = 1;$i <= 480;$i++){
             $gameCards = new GameCards;
-            $gameCards->id = $data.'|'.$i;
+            $gameCards->id = $data.'|'.sprintf("%03d", $i);       // 补齐3位;
             $cardIndexs = $constant::CARDINDEXS;      // 获取总牌组
             shuffle($cardIndexs);     // 随机
             $cardIndexs = array_chunk($cardIndexs,5);       // 分割
@@ -82,7 +85,7 @@ class GameController extends Controller
         $data = date("Ymd");
         for($i = 1;$i <= 480;$i++){
             $gameCards = new GameCards;
-            $gameCards->id = $data.'|'.$i;
+            $gameCards->id = $data.'|'.sprintf("%03d", $i);       // 补齐3位;
             $cardIndexs = $constant::CARDINDEXS;      // 获取总牌组
             shuffle($cardIndexs);     // 随机
             $cardIndexs = array_chunk($cardIndexs,5);       // 分割
@@ -117,6 +120,7 @@ class GameController extends Controller
         $allBets = Redis::hgetall($key);
         $bankerPoint = $gameInfo->position[0]["point"];     // 庄家点数
         $bankerResult = 0;      // 庄家输赢
+        $pot = 0;       // 总下注数
         foreach($allBets as $userId=>$value){
             $result = 0;        // 玩家输赢
             $value = json_decode($value,true);
@@ -135,9 +139,10 @@ class GameController extends Controller
                     $result -= $this->getResult($bankerPoint,$double,$value[$i]);
                 }
             }
-            if($result > 0){        // 赢了
+            $pot += $betnum;
+            if($result > 0){        // 玩家赢了
                 $bankerResult -= $result;
-            }elseif ($result < 0){      // 输了
+            }elseif ($result < 0){      // 玩家输了
                 $bankerResult += abs($result);
             }
             $value["result"] = $result;
@@ -152,8 +157,18 @@ class GameController extends Controller
             }
             $userInfo["chips"] += $result;
             Redis::set($key2."|".$userId, json_encode($userInfo));
+            // 保存玩家下注数据
+            $userbet = new UserBet();
+            $userbet->user_id = $userId;
+            $userbet->game_id = $gameInfo->gameId;
+            $userbet->bets = json_encode($value);
+            $userbet->betnum = $betnum;
+            $userbet->result = $result;
+            $userbet->save();
         }
-        return $bankerResult;
+        $response['bankerResult'] =$bankerResult;
+        $response['pot'] = $pot;
+        return $response;
     }
 
     /*算分*/

@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Redis;
 use App\Model\Constant;
 use App\Model\ResponseData;
+use App\Model\UserBet;
 
 class UserController extends Controller
 {
@@ -261,5 +262,43 @@ class UserController extends Controller
     public static function getMillisecond() {
         list($t1, $t2) = explode(' ', microtime());
         return (float)sprintf('%.0f',(floatval($t1)+floatval($t2))*1000);
+    }
+
+    /*获取历史下注信息*/
+    public static function getHistoryBets(Request $request) {
+        $response = new ResponseData();
+        $startDate  = $request->input('startDate');       // 查询开始日期|001
+        $endDate  = $request->input('endDate');       // 查询结束日期|460
+        $key = "USER_INFO";       // 玩家信息
+        $userId = $request->session()->get('userId');
+        $userInfo = json_decode(Redis::get($key."|".$userId),true);
+        if($userInfo == null){
+            $response->result = false;
+            $response->message = "请先登录";
+            return json_encode($response);
+        }
+        $userBets = UserBet::whereBetween('game_id', [$startDate, $endDate])->where('user_id', $userId)->get();
+        $response->data = $userBets;
+        return json_encode($response);
+    }
+
+    /*获取某一天的投注信息*/
+    public static function getDateBets(Request $request) {
+        $response = new ResponseData();
+        $date  = $request->input('date');       // 查询开始日期
+        $key = "USER_INFO";       // 玩家信息
+        $userId = $request->session()->get('userId');
+        $userInfo = json_decode(Redis::get($key."|".$userId),true);
+        if($userInfo == null){
+            $response->result = false;
+            $response->message = "请先登录";
+            return json_encode($response);
+        }
+        $userBets = UserBet::where('user_id',$userId)->where('game_id','like',$date.'%')->get();
+        $data['date'] = $date;
+        $data['betnum'] = $userBets->sum('betnum');
+        $data['result'] = $userBets->sum('result');
+        $response->data = $data;
+        return json_encode($response);
     }
 }
