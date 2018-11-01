@@ -141,31 +141,22 @@ class GameController extends Controller
                 }
             }
             // 统计游戏信息
+            $bankerResult += $result;
             $pot += $betnum;
-            if($result > 0){        // 玩家赢了
-                $bankerResult -= $result;
-            }elseif ($result < 0){      // 玩家输了
-                $bankerResult += abs($result);
-            }
             // 保存玩家下注信息
             $value["result"] = $result;
             Redis::hset($key,$userId,json_encode($value));
             $userbet = new UserBet();
             $userbet->user_id = $userId;
             $userbet->game_id = $gameInfo->gameId;
-            $userbet->bets = json_encode($value);
+            $userbet->bets = $value;
             $userbet->betnum = $betnum;
             $userbet->result = $result;
             $userbet->save();
             // 更新玩家信息
             $key2 = "USER_INFO";       // 玩家信息
             $userInfo = json_decode(Redis::get($key2."|".$userId),true);
-            if($result<0){      // 多扣输的筹码
-                $result = $betnum - abs($result);
-            }elseif($result>0){      // 赢了返还筹码
-                $result = $betnum + $result;
-            }
-            $userInfo["chips"] += $result;
+            $userInfo["chips"] += $betnum + $result;        // 返还筹码
             Redis::set($key2."|".$userId, json_encode($userInfo));
         }
         $response['bankerResult'] = $bankerResult;
