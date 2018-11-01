@@ -26,10 +26,8 @@ class UserController extends Controller
             $userInfo->sex = "0";
             $userInfo->province = "province";
             $userInfo->city = "city";
-            $userInfo->chips = 10000;
             $userInfo->save();
             $request->session()->put('userId', $userInfo->id);
-            Redis::set($key."|".$userInfo->id, json_encode($userInfo));
         }else{
             $userInfo = json_decode(Redis::get($key."|".$userId),true);
             if(blank($userInfo)){
@@ -38,9 +36,10 @@ class UserController extends Controller
                     $request->session()->flush();
                     return $this->login($request);
                 }
-                Redis::set($key."|".$userInfo->id, json_encode($userInfo));
             }
         }
+        $userInfo->chips = 10000;
+        Redis::set($key."|".$userInfo->id, json_encode($userInfo));
         $response->data = $userInfo;
         return json_encode($response);exit;
         // 微信登录
@@ -70,11 +69,9 @@ class UserController extends Controller
                 $userInfo->sex = $res['sex'];
                 $userInfo->province = $res['province'];
                 $userInfo->city = $res['city'];
-                $userInfo->chips = 10000;
                 $userInfo->save();
             }
             $request->session()->put('userId', $userInfo->id);
-            Redis::set($key."|".$userInfo->id, json_encode($userInfo));
         }else{
             $userInfo = json_decode(Redis::get($key."|".$userId),true);
             if(blank($userInfo)){
@@ -83,9 +80,10 @@ class UserController extends Controller
                     $request->session()->flush();
                     return $this->login($request);
                 }
-                Redis::set($key."|".$userInfo->id, json_encode($userInfo));
             }
         }
+        $userInfo->chips = 10000;       // TODO 筹码跟服务器要
+        Redis::set($key."|".$userInfo->id, json_encode($userInfo));
         $response->data = $userInfo;
         return json_encode($response);
     }
