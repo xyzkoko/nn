@@ -16,7 +16,7 @@ class AdminController extends Controller
     /*查询日期所有牌组列表*/
     public function getCardsInfo(Request $request){
         $response = new ResponseData();
-        $adminId = $request->session()->get('adminId');
+/*        $adminId = $request->session()->get('adminId');
         if(blank($adminId)) {
             $response->result = false;
             $response->message = "请先登录";
@@ -28,7 +28,16 @@ class AdminController extends Controller
             $response->result = false;
             $response->message = "请先登录";
             return json_encode($response);
+        }*/
+        // 暂不验证uuid
+        $uuid = $request->input('uuid');
+        $adminId = Redis::get($uuid);
+        if(blank($adminId)){
+            $response->result = false;
+            $response->message = "请先登录";
+            return json_encode($response);
         }
+        Redis::setex($uuid, 1800,$adminId);     // 刷新uuid有效期
         $startDate  = $request->input('startDate');       // 查询开始日期|001
         $endDate  = $request->input('endDate');       // 查询结束日期|460
         $gameCards = GameCards::whereBetween('id', [$startDate, $endDate])->get();
@@ -39,7 +48,7 @@ class AdminController extends Controller
     /*修改牌组*/
     public function putCardsInfo(Request $request){
         $response = new ResponseData();
-        $adminId = $request->session()->get('adminId');
+/*        $adminId = $request->session()->get('adminId');
         if(blank($adminId)) {
             $response->result = false;
             $response->message = "请先登录";
@@ -51,7 +60,16 @@ class AdminController extends Controller
             $response->result = false;
             $response->message = "请先登录";
             return json_encode($response);
+        }*/
+        // 暂不验证uuid
+        $uuid = $request->input('uuid');
+        $adminId = Redis::get($uuid);
+        if(blank($adminId)){
+            $response->result = false;
+            $response->message = "请先登录";
+            return json_encode($response);
         }
+        Redis::setex($uuid, 1800,$adminId);     // 刷新uuid有效期
         $gameId  = $request->input('gameId');
         $gameCards = GameCards::where('id',$gameId)->first();
         if($gameCards->status == 2){        // 已结算
