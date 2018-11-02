@@ -94,7 +94,7 @@ class AdminController extends Controller
         }
         $request->session()->put('adminId', $adminInfo->id);
         $uuid = UUID::generate()->string;
-        Redis::set($uuid, $adminInfo->id);
+        Redis::setex($uuid, 1800,$adminInfo->id);
         $data['uuid'] = $uuid;
         $response->data = $data;
         return json_encode($response);
