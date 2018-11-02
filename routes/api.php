@@ -39,5 +39,6 @@ Route::group(['namespace' => 'User'], function(){
 Route::group(['namespace' => 'Admin'], function(){
     Route::post('/admin/getCards', 'AdminController@getCardsInfo');
     Route::post('/admin/putCards', 'AdminController@putCardsInfo');
+    Route::post('/admin/login', 'AdminController@login');
 });
 
