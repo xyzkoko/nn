@@ -66,6 +66,7 @@ class GameController extends Controller
     {
         $constant = new Constant();
         $data = date("Ymd",strtotime("+1 day"));
+        $closeTime = strtotime($data) + 105;
         for($i = 1;$i <= 480;$i++){
             $gameCards = new GameCards;
             $gameCards->id = $data.'|'.sprintf("%03d", $i);       // 补齐3位;
@@ -74,7 +75,9 @@ class GameController extends Controller
             $cardIndexs = array_chunk($cardIndexs,5);       // 分割
             $cardIndexs = array_slice($cardIndexs,0,10);        // 取前十个
             $gameCards->cards = json_encode($cardIndexs);
+            $gameCards->close_time = $closeTime * 1000;
             $gameCards->save();
+            $closeTime += 180;
         }
         echo 'success';
     }
@@ -84,6 +87,7 @@ class GameController extends Controller
     {
         $constant = new Constant();
         $data = date("Ymd");
+        $closeTime = strtotime($data) + 105;
         for($i = 1;$i <= 480;$i++){
             $gameCards = new GameCards;
             $gameCards->id = $data.'|'.sprintf("%03d", $i);       // 补齐3位;
@@ -92,7 +96,9 @@ class GameController extends Controller
             $cardIndexs = array_chunk($cardIndexs,5);       // 分割
             $cardIndexs = array_slice($cardIndexs,0,10);        // 取前十个
             $gameCards->cards = json_encode($cardIndexs);
+            $gameCards->close_time = $closeTime * 1000;
             $gameCards->save();
+            $closeTime += 180;
         }
         echo 'success';
     }
