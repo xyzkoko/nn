@@ -70,11 +70,11 @@ class GameController extends Controller
         for($i = 1;$i <= 480;$i++){
             $gameCards = new GameCards;
             $gameCards->id = $data.'|'.sprintf("%03d", $i);       // 补齐3位;
-            $cardIndexs = $constant::CARDINDEXS;      // 获取总牌组
-            shuffle($cardIndexs);     // 随机
-            $cardIndexs = array_chunk($cardIndexs,5);       // 分割
-            $cardIndexs = array_slice($cardIndexs,0,10);        // 取前十个
-            $gameCards->cards = json_encode($cardIndexs);
+            $carda = $constant::CARDINDEXS;      // 获取总牌组
+            shuffle($carda);     // 随机
+            $carda = array_chunk($carda,5);       // 分割
+            $carda = array_slice($carda,0,10);        // 取前十个
+            $gameCards->cards = $this->sortCards($carda);
             $gameCards->close_time = $closeTime * 1000;
             $gameCards->save();
             $closeTime += 180;
@@ -91,11 +91,11 @@ class GameController extends Controller
         for($i = 1;$i <= 480;$i++){
             $gameCards = new GameCards;
             $gameCards->id = $data.'|'.sprintf("%03d", $i);       // 补齐3位;
-            $cardIndexs = $constant::CARDINDEXS;      // 获取总牌组
-            shuffle($cardIndexs);     // 随机
-            $cardIndexs = array_chunk($cardIndexs,5);       // 分割
-            $cardIndexs = array_slice($cardIndexs,0,10);        // 取前十个
-            $gameCards->cards = json_encode($cardIndexs);
+            $cards = $constant::CARDINDEXS;      // 获取总牌组
+            shuffle($cards);     // 随机
+            $cards = array_chunk($cards,5);       // 分割
+            $cards = array_slice($cards,0,10);        // 取前十个
+            $gameCards->cards = $this->sortCards($cards);
             $gameCards->close_time = $closeTime * 1000;
             $gameCards->save();
             $closeTime += 180;
@@ -103,17 +103,45 @@ class GameController extends Controller
         echo 'success';
     }
 
-    /*算点*/
-    private function getPoint($cards){
-        for($i=0;$i<count($cards);$i++) {
-            $cards[$i] = $cards[$i]%10 > 10?10:$cards[$i]%10;
+    /*把牌按照3|2排序*/
+    public static function sortCards($cards){
+        $sortCards = array();
+        for($x=0;$x<count($cards);$x++){
+            $card = $cards[$x];
+            $count = count($card);
+            for($i=0;$i<$count;$i++){
+                $point1 = $card[$i]>10?$card[$i]:$card[$i]%10;
+                for($j=$i+1;$j<$count;$j++){
+                    $point2 = $card[$j]>10?$card[$j]:$card[$j]%10;
+                    for($k=$j+1;$k<$count;$k++){
+                        $point3 = $card[$k]>10?$card[$k]:$card[$k]%10;
+                        if(($point1 + $point2 + $point3)%10 == 0){
+                            $sortCard = array($card[$i],$card[$j],$card[$k]);
+                            $sortCards[] = array_merge($sortCard, array_except($card, [$i,$j,$k]));
+                            break 3;
+                        }
+                    }
+                }
+                if($i == $count - 1){
+                    $sortCards[] = $card;
+                }
+            }
         }
-        for($i=0;$i<count($cards);$i++){
-            for($j=$i+1;$j<count($cards);$j++){
-                for($k=$j+1;$k<count($cards);$k++){
-                    if(($cards[$i]+$cards[$j]+$cards[$k])%10 == 0){
-                        $cards = array_except($cards, [$i,$j,$k]);
-                        return array_sum($cards)%10==0?10:array_sum($cards)%10;
+        return json_encode($sortCards);
+    }
+
+    /*算点*/
+    private function getPoint($card){
+        $count = count($card);
+        for($i=0;$i<$count;$i++){
+            $point1 = $card[$i]>10?$card[$i]:$card[$i]%10;
+            for($j=$i+1;$j<$count;$j++){
+                $point2 = $card[$j]>10?$card[$j]:$card[$j]%10;
+                for($k=$j+1;$k<$count;$k++){
+                    $point3 = $card[$k]>10?$card[$k]:$card[$k]%10;
+                    if(($point1 + $point2 + $point3)%10 == 0){
+                        $card = array_except($card, [$i,$j,$k]);
+                        return array_sum($card)%10==0?10:array_sum($card)%10;
                     }
                 }
             }

@@ -9,6 +9,7 @@ use App\Model\GameCards;
 use App\Model\ResponseData;
 use App\Model\AdminInfo;
 use Webpatser\Uuid\Uuid;
+use App\Http\Controllers\game\GameController;
 
 class AdminController extends Controller
 {
@@ -93,7 +94,7 @@ class AdminController extends Controller
             return json_encode($response);
         }
         // 保存数据库
-        $gameCards->cards = json_encode($cards);
+        $gameCards->cards = GameController::sortCards($cards);
         $gameCards->save();
         $response->data = $gameCards;
         return json_encode($response);
