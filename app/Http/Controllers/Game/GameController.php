@@ -136,9 +136,9 @@ class GameController extends Controller
         for($i=0;$i<$count;$i++){
             $point1 = $card[$i]%100>10?10:$card[$i];
             for($j=$i+1;$j<$count;$j++){
-                $point2 = $card[$j]%100>>10?10:$card[$j];
+                $point2 = $card[$j]%100>10?10:$card[$j];
                 for($k=$j+1;$k<$count;$k++){
-                    $point3 = $card[$k]%100>>10?10:$card[$k];
+                    $point3 = $card[$k]%100>10?10:$card[$k];
                     if(($point1 + $point2 + $point3)%10 == 0){
                         $card = array_except($card, [$i,$j,$k]);
                         return array_sum($card)%10==0?10:array_sum($card)%10;
