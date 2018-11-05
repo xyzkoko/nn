@@ -110,11 +110,11 @@ class GameController extends Controller
             $card = $cards[$x];
             $count = count($card);
             for($i=0;$i<$count;$i++){
-                $point1 = $card[$i]>10?$card[$i]:$card[$i]%10;
+                $point1 = $card[$i]>10?$card[$i]%10:$card[$i];
                 for($j=$i+1;$j<$count;$j++){
-                    $point2 = $card[$j]>10?$card[$j]:$card[$j]%10;
+                    $point2 = $card[$j]>10?$card[$j]%10:$card[$j];
                     for($k=$j+1;$k<$count;$k++){
-                        $point3 = $card[$k]>10?$card[$k]:$card[$k]%10;
+                        $point3 = $card[$k]>10?$card[$k]%10:$card[$k];
                         if(($point1 + $point2 + $point3)%10 == 0){
                             $sortCard = array($card[$i],$card[$j],$card[$k]);
                             $sortCards[] = array_merge($sortCard, array_except($card, [$i,$j,$k]));
@@ -134,11 +134,11 @@ class GameController extends Controller
     private function getPoint($card){
         $count = count($card);
         for($i=0;$i<$count;$i++){
-            $point1 = $card[$i]>10?$card[$i]:$card[$i]%10;
+            $point1 = $card[$i]>10?$card[$i]%10:$card[$i];
             for($j=$i+1;$j<$count;$j++){
-                $point2 = $card[$j]>10?$card[$j]:$card[$j]%10;
+                $point2 = $card[$j]>10?$card[$j]%10:$card[$j];
                 for($k=$j+1;$k<$count;$k++){
-                    $point3 = $card[$k]>10?$card[$k]:$card[$k]%10;
+                    $point3 = $card[$k]>10?$card[$k]%10:$card[$k];
                     if(($point1 + $point2 + $point3)%10 == 0){
                         $card = array_except($card, [$i,$j,$k]);
                         return array_sum($card)%10==0?10:array_sum($card)%10;
