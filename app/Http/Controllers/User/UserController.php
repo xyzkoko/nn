@@ -40,7 +40,7 @@ class UserController extends Controller
         }
         $userInfo['chips'] = 10000;
         //Redis::setex($key."|".$userInfo['id'], 7200,json_encode($userInfo));
-        Redis::setex($key."|".$userInfo['id'],json_encode($userInfo));
+        Redis::set($key."|".$userInfo['id'],json_encode($userInfo));
         $response->data = $userInfo;
         return json_encode($response);exit;
         // 微信登录
@@ -85,7 +85,7 @@ class UserController extends Controller
         }
         $userInfo['chips'] = 10000;       // TODO 筹码跟服务器要
         //Redis::setex($key."|".$userInfo['id'],7200, json_encode($userInfo));
-        Redis::setex($key."|".$userInfo['id'],json_encode($userInfo));
+        Redis::set($key."|".$userInfo['id'],json_encode($userInfo));
         $response->data = $userInfo;
         return json_encode($response);
     }
