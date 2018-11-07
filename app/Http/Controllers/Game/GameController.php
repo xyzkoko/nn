@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\game;
 
+use App\model\UserInfo;
 use Illuminate\Support\Facades\Redis;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\user\UserController;
@@ -35,7 +36,8 @@ class GameController extends Controller
         $gameInfo = new GameInfo;
         $gameInfo->gameId = $gameId;
         $gameInfo->startTime = UserController::getMillisecond();
-        $gameInfo->status = 1;      // TODO 方便下注测试
+        $gameInfo->status = 1;      // TODO 方便下注测试原来是0
+        $gameInfo->position = $this->getPosition($gameInfo->position);     // 随机获取玩家头像
         Redis::set($key2, json_encode($gameInfo));            // 更新Redis
         $key3 = "BETS_INFO";       // 下注信息
         Redis::del($key3);
@@ -214,4 +216,16 @@ class GameController extends Controller
         }
         return $bets;
     }
+
+    /*随机获取玩家头像信息*/
+    private function getPosition($position){
+        $userInfo =  UserInfo::where('headimgurl','<>', 'headimgurl')->inRandomOrder()->take(9) ->get()->toArray();
+        for($i = 1;$i<count($position);$i++){
+            $position[$i]['nickname'] = $userInfo[$i-1]["nickname"];
+            $position[$i]['headimgurl'] = $userInfo[$i-1]["headimgurl"];
+        }
+        return $userInfo;
+    }
+
+
 }
