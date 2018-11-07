@@ -224,7 +224,7 @@ class GameController extends Controller
             $position[$i]['nickname'] = $userInfo[$i-1]["nickname"];
             $position[$i]['headimgurl'] = $userInfo[$i-1]["headimgurl"];
         }
-        return $userInfo;
+        return $position;
     }
 
 
