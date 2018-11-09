@@ -185,7 +185,7 @@ class GameController extends Controller
             $userbet = new UserBet();
             $userbet->user_id = $userId;
             $userbet->game_id = $gameInfo->gameId;
-            $userbet->bets = $value;
+            $userbet->bets = json_encode($value);
             $userbet->betnum = $betnum;
             $userbet->result = $result;
             $userbet->save();
