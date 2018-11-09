@@ -2,7 +2,7 @@
 
 return [
 
-    // php artisan config:cache
+    // TODO php artisan config:cache
 
     'appId' => '123456789',
 
