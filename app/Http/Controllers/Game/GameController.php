@@ -177,7 +177,7 @@ class GameController extends Controller
                 }
             }
             // 统计游戏信息
-            $bankerResult += $result;
+            $bankerResult -= $result;
             $pot += $betnum;
             // 保存玩家下注信息
             $value["result"] = $result;
