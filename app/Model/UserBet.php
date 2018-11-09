@@ -10,6 +10,6 @@ class UserBet extends Model
 
     protected $primaryKey = ['user_id', 'game_id'];         // 设置组合主键
 
-    public $timestamps = false;
-
+    public $keyType = 'string';
+    public $incrementing = false;
 }
