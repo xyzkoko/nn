@@ -135,15 +135,16 @@ class GameController extends Controller
     /*算点*/
     private function getPoint($card){
         $count = count($card);
+        $cardPoint = array();
         for($i=0;$i<$count;$i++){
-            $point1 = $card[$i]%100>10?10:$card[$i];
+            $cardPoint[] = $card[$i]%100>10?10:$card[$i];
+        }
+        for($i=0;$i<$count;$i++){
             for($j=$i+1;$j<$count;$j++){
-                $point2 = $card[$j]%100>10?10:$card[$j];
                 for($k=$j+1;$k<$count;$k++){
-                    $point3 = $card[$k]%100>10?10:$card[$k];
-                    if(($point1 + $point2 + $point3)%10 == 0){
-                        $card = array_except($card, [$i,$j,$k]);
-                        return array_sum($card)%10==0?10:array_sum($card)%10;
+                    if(($cardPoint[$i] + $cardPoint[$j] + $cardPoint[$k])%10 == 0){
+                        $cardPoint = array_except($cardPoint, [$i,$j,$k]);
+                        return array_sum($cardPoint)%10==0?10:array_sum($card)%10;
                     }
                 }
             }
