@@ -143,7 +143,7 @@ class GameController extends Controller
                 for($k=$j+1;$k<$count;$k++){
                     if(($cardPoint[$i] + $cardPoint[$j] + $cardPoint[$k])%10 == 0){
                         $cardPoint = array_except($cardPoint, [$i,$j,$k]);
-                        return array_sum($cardPoint)%10==0?10:array_sum($card)%10;
+                        return array_sum($cardPoint)%10==0?10:array_sum($cardPoint)%10;
                     }
                 }
             }
