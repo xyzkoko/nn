@@ -108,8 +108,7 @@ class GameController extends Controller
     /*把牌按照3|2排序*/
     public static function sortCards($cards){
         $sortCards = array();
-        for($x=0;$x<count($cards);$x++){
-            $card = $cards[$x];
+        foreach ($cards as $card){
             $count = count($card);
             for($i=0;$i<$count;$i++){
                 $point1 = $card[$i]%100>10?10:$card[$i];
