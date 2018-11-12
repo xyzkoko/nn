@@ -42,3 +42,4 @@ Route::group(['namespace' => 'Admin'], function(){
     Route::post('/admin/login', 'AdminController@login');
 });
 
+Route::post('/test/cookie', 'TestController@cookie');

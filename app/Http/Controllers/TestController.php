@@ -32,4 +32,8 @@ class TestController extends Controller
         return response([$value,$value2]);
     }
 
+    public function cookie(Request $request)
+    {
+        return $request->cookie();
+    }
 }
