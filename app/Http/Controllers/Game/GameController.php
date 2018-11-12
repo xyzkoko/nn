@@ -171,9 +171,9 @@ class GameController extends Controller
                 $betnum += $value[$i];
                 // 比大小
                 if($playerPoint > $bankerPoint){      // win
-                    $result += $this->getResult($playerPoint,$double,$value[$i]);
+                    $result += $this->getResult($playerPoint,$bankerPoint,$double,$value[$i],true);
                 }elseif ($playerPoint < $bankerPoint){        // lose
-                    $result -= $this->getResult($bankerPoint,$double,$value[$i]);
+                    $result -= $this->getResult($bankerPoint,$playerPoint,$double,$value[$i],false);
                 }
             }
             // 统计游戏信息
@@ -201,18 +201,20 @@ class GameController extends Controller
     }
 
     /*算分*/
-    private function getResult($bigPoint, $double, $bets){
+    private function getResult($bigPoint,$smallPoint,$double, $bets, $half){
         if($double == 1){
             if($bigPoint == 8){
-                return $bets * 2;
+                $bets = $bets * 2;
             }
             if($bigPoint == 9){
-                return $bets * 3;
+                $bets = $bets * 3;
             }
             if($bigPoint == 10){
-                return $bets * 4;
+                $bets = $bets * 4;
             }
-            return $bets;
+        }
+        if($half && $bigPoint == 5 && ($smallPoint == 4 || $smallPoint == 0)){      // 特殊点数庄家赔付一半
+            $bets = $bets/2;
         }
         return $bets;
     }
