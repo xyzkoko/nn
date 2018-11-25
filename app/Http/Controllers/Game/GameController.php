@@ -10,6 +10,7 @@ use App\Model\GameCards;
 use App\Model\GameInfo;
 use App\Model\Constant;
 use App\Model\UserBet;
+use App\Model\ResponseData;
 
 class GameController extends Controller
 {
@@ -227,5 +228,27 @@ class GameController extends Controller
         return $position;
     }
 
+    /*获取当前牌局信息*/
+    public function getGameInfo(){
+        $response = new ResponseData();
+        $key = "GAME_ID";       // 当局ID
+        $gameId = Redis::get($key);
+        $gameCards = GameCards::find($gameId);
+        $cards = json_decode($gameCards["cards"],true);
+        $gameInfo['gameId'] = $gameId;
+        $gameInfo['cards'] = $cards;
+        $pieces = explode("|", $gameId);
+        if($pieces[1] == 480 || $pieces[0] != date('Ymd')){
+            $num = 1;
+        }else{
+            $num = $pieces[1] + 1;
+        }
+        $num = sprintf("%03d", $num);       // 补齐3位
+        $nextGameId = date('Ymd').'|'.$num;
+        $gameInfo['nextGameId'] = $nextGameId;
+        $response->data = $gameInfo;
+        return json_encode($response);
+    }
 
 }
+
