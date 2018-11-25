@@ -109,8 +109,7 @@ class GameController extends Controller
     /*把牌按照3|2排序*/
     public static function sortCards($cards){
         $sortCards = array();
-        for($x=0;$x<count($cards);$x++){
-            $card = $cards[$x];
+        foreach ($cards as $card){
             $count = count($card);
             for($i=0;$i<$count;$i++){
                 $point1 = $card[$i]%100>10?10:$card[$i];
@@ -136,15 +135,16 @@ class GameController extends Controller
     /*算点*/
     private function getPoint($card){
         $count = count($card);
+        $cardPoint = array();
         for($i=0;$i<$count;$i++){
-            $point1 = $card[$i]%100>10?10:$card[$i];
+            $cardPoint[] = $card[$i]%100>10?10:$card[$i];
+        }
+        for($i=0;$i<$count;$i++){
             for($j=$i+1;$j<$count;$j++){
-                $point2 = $card[$j]%100>10?10:$card[$j];
                 for($k=$j+1;$k<$count;$k++){
-                    $point3 = $card[$k]%100>10?10:$card[$k];
-                    if(($point1 + $point2 + $point3)%10 == 0){
-                        $card = array_except($card, [$i,$j,$k]);
-                        return array_sum($card)%10==0?10:array_sum($card)%10;
+                    if(($cardPoint[$i] + $cardPoint[$j] + $cardPoint[$k])%10 == 0){
+                        $cardPoint = array_except($cardPoint, [$i,$j,$k]);
+                        return array_sum($cardPoint)%10==0?10:array_sum($cardPoint)%10;
                     }
                 }
             }
@@ -172,13 +172,13 @@ class GameController extends Controller
                 $betnum += $value[$i];
                 // 比大小
                 if($playerPoint > $bankerPoint){      // win
-                    $result += $this->getResult($playerPoint,$double,$value[$i]);
+                    $result += $this->getResult($playerPoint,$bankerPoint,$double,$value[$i],true);
                 }elseif ($playerPoint < $bankerPoint){        // lose
-                    $result -= $this->getResult($bankerPoint,$double,$value[$i]);
+                    $result -= $this->getResult($bankerPoint,$playerPoint,$double,$value[$i],false);
                 }
             }
             // 统计游戏信息
-            $bankerResult += $result;
+            $bankerResult -= $result;
             $pot += $betnum;
             // 保存玩家下注信息
             $value["result"] = $result;
@@ -186,7 +186,7 @@ class GameController extends Controller
             $userbet = new UserBet();
             $userbet->user_id = $userId;
             $userbet->game_id = $gameInfo->gameId;
-            $userbet->bets = $value;
+            $userbet->bets = json_encode($value);
             $userbet->betnum = $betnum;
             $userbet->result = $result;
             $userbet->save();
@@ -202,18 +202,20 @@ class GameController extends Controller
     }
 
     /*算分*/
-    private function getResult($bigPoint, $double, $bets){
+    private function getResult($bigPoint,$smallPoint,$double, $bets, $half){
         if($double == 1){
             if($bigPoint == 8){
-                return $bets * 2;
+                $bets = $bets * 2;
             }
             if($bigPoint == 9){
-                return $bets * 3;
+                $bets = $bets * 3;
             }
             if($bigPoint == 10){
-                return $bets * 4;
+                $bets = $bets * 4;
             }
-            return $bets;
+        }
+        if($half && $bigPoint == 5 && ($smallPoint == 4 || $smallPoint == 0)){      // 特殊点数庄家赔付一半
+            $bets = $bets/2;
         }
         return $bets;
     }

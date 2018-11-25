@@ -31,4 +31,9 @@ class TestController extends Controller
         $value2 = $map['name'];
         return response([$value,$value2]);
     }
+
+    public function cookie(Request $request)
+    {
+        return $request->cookie();
+    }
 }
