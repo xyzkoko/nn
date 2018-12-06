@@ -252,5 +252,20 @@ class GameController extends Controller
         return json_encode($response);
     }
 
+    /*更改座位玩家头像*/
+    public function changeIcon(){
+        echo 1;
+        sleep(10);
+        echo 2;
+        sleep(10);
+        echo 3;
+        sleep(10);
+        echo 4;
+        sleep(10);
+        echo 5;
+        sleep(10);
+        echo 6;
+    }
+
 }
 
