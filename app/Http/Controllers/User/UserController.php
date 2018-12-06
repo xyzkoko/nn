@@ -132,7 +132,7 @@ class UserController extends Controller
     {
         $response = new ResponseData();
         $key = "USER_INFO";       // 玩家信息
-        $userId = 106;//$request->session()->get('userId');
+        $userId = $request->session()->get('userId');
         $userInfo = json_decode(Redis::get($key . "|" . $userId), true);
         if ($userInfo == null) {
             $response->result = false;
@@ -148,7 +148,7 @@ class UserController extends Controller
     {
         $response = new ResponseData();
         $key = "BETS_INFO";       // 下注信息
-        $userId = 106;//$request->session()->get('userId');
+        $userId = $request->session()->get('userId');
         $bets = json_decode(Redis::hget($key, $userId), true);
         if (blank($bets)) {
             $constant = new Constant();
@@ -178,7 +178,7 @@ class UserController extends Controller
             return json_encode($response);
         }
         $key2 = "USER_INFO";       // 玩家信息
-        $userId = 106;//$request->session()->get('userId');
+        $userId = $request->session()->get('userId');
         $userInfo = json_decode(Redis::get($key2 . "|" . $userId), true);
         if ($userInfo == null) {
             $response->result = false;
@@ -279,7 +279,7 @@ class UserController extends Controller
         $startDate = $request->input('startDate');       // 查询开始日期|001
         $endDate = $request->input('endDate');       // 查询结束日期|460
         $key = "USER_INFO";       // 玩家信息
-        $userId = 106;//$request->session()->get('userId');
+        $userId = $request->session()->get('userId');
         $userInfo = json_decode(Redis::get($key . "|" . $userId), true);
         if ($userInfo == null) {
             $response->result = false;
@@ -297,7 +297,7 @@ class UserController extends Controller
         $response = new ResponseData();
         $date = $request->input('date');       // 查询开始日期
         $key = "USER_INFO";       // 玩家信息
-        $userId = 106;//$request->session()->get('userId');
+        $userId = $request->session()->get('userId');
         $userInfo = json_decode(Redis::get($key . "|" . $userId), true);
         if ($userInfo == null) {
             $response->result = false;
@@ -316,6 +316,8 @@ class UserController extends Controller
     public static function saveUserIcon(Request $request)
     {
         $response = new ResponseData();
+        $savaUri = config('headimgurl.sava_uri');
+        $visitUri = config('headimgurl.visit_uri');
         $uid = $request->input('uid');
         $url = $request->input('headimgurl');
         $header = array(
@@ -332,15 +334,26 @@ class UserController extends Controller
         $code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
         curl_close($curl);
         $imgBase64Code = null;
-        if ($code == 200) {//把URL格式的图片转成base64_encode格式的！
+        if ($code == 200) {     // 把URL格式的图片转成base64_encode格式的！
             $imgBase64Code = "data:image/jpeg;base64," . base64_encode($data);
         }
         if (preg_match('/^(data:\s*image\/(\w+);base64,)/', $imgBase64Code, $result)) {
-            $new_file = "/data/wwwroot/nn/public/photo/niuniu_{$uid}.png";
-            if (file_put_contents($new_file, base64_decode(str_replace($result[1], '', $imgBase64Code)))) {
-                $response->data = $new_file;
-            }
+            $new_file = "{$savaUri}/niuniu_{$uid}.png";
+            file_put_contents($new_file, base64_decode(str_replace($result[1], '', $imgBase64Code)));
         }
+        // 保存数据库
+        $userInfo = UserInfo::where('openid', $uid)->first();
+        if (blank($userInfo)) {     // 新用户
+            $userInfo = new UserInfo();
+            $userInfo->openid = $uid;
+            $userInfo->nickname = "nickname";
+            $userInfo->headimgurl = "{$visitUri}/niuniu_{$uid}.png";
+            $userInfo->sex = "0";
+            $userInfo->province = "province";
+            $userInfo->city = "city";
+            $userInfo->save();
+        }
+        $response->data = $userInfo;
         return json_encode($response);
     }
 }
