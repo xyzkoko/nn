@@ -35,6 +35,7 @@ Route::group(['namespace' => 'User'], function(){
     Route::post('/user/dateBets', 'UserController@getDateBets');
     Route::get('/user/time', 'UserController@getTime');
     Route::get('/weichat/oauth2', 'WeiChatController@oauth2');
+    Route::post('/user/icon', 'UserController@saveUserIcon');
 });
 
 Route::group(['namespace' => 'Admin'], function(){
