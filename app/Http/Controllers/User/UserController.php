@@ -96,14 +96,14 @@ class UserController extends Controller
     public function getGameInfo(Request $request)
     {
         $response = new ResponseData();
-        $key = "USER_INFO";       // 玩家信息
+/*        $key = "USER_INFO";       // 玩家信息
         $userId = 106;//$request->session()->get('userId');
         $userInfo = json_decode(Redis::get($key . "|" . $userId), true);
         if ($userInfo == null) {
             $response->result = false;
             $response->message = "请先登录";
             return json_encode($response);
-        }
+        }*/
         $key2 = "GAME_INFO";       // 当局信息
         $gameInfo = json_decode(Redis::get($key2), true);
         if ($gameInfo == null) {
@@ -111,7 +111,7 @@ class UserController extends Controller
             $response->message = "牌局错误";
             return json_encode($response);
         }
-        for ($i = 0; $i < count($gameInfo["position"]); $i++) {
+/*        for ($i = 0; $i < count($gameInfo["position"]); $i++) {
             if ($gameInfo["position"][$i]["nickname"] == $userInfo["nickname"]) {
                 break;
             }
@@ -120,7 +120,7 @@ class UserController extends Controller
                 $gameInfo["position"][$i]["headimgurl"] = $userInfo["headimgurl"];
                 break;
             }
-        }
+        }*/
         $gameInfo["nowTime"] = $this->getMillisecond();
         Redis::set($key2, json_encode($gameInfo));
         $response->data = $gameInfo;
