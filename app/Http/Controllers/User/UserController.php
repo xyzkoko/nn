@@ -336,10 +336,16 @@ class UserController extends Controller
         $imgBase64Code = null;
         if ($code == 200) {     // 把URL格式的图片转成base64_encode格式的！
             $imgBase64Code = "data:image/jpeg;base64," . base64_encode($data);
+        }else{
+            $response->data = "error1";
+            return json_encode($response);
         }
         if (preg_match('/^(data:\s*image\/(\w+);base64,)/', $imgBase64Code, $result)) {
             $new_file = "{$savaUri}/niuniu_{$uid}.png";
             file_put_contents($new_file, base64_decode(str_replace($result[1], '', $imgBase64Code)));
+        }else{
+            $response->data = "error2";
+            return json_encode($response);
         }
         // 保存数据库
         $userInfo = UserInfo::where('openid', $uid)->first();
