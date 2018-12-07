@@ -15,30 +15,34 @@ use App\Model\ResponseData;
 class GameController extends Controller
 {
     /*每三分钟运行一次进行游戏*/
-    public function startGame(){
+    public function startGame()
+    {
         set_time_limit(180);
         $key = "GAME_ID";       // 当局ID
         $gameId = Redis::get($key);
-        if(blank($gameId)){
+        if (blank($gameId)) {
             $num = 1;
-        }else{
+        } else {
             $pieces = explode("|", $gameId);
-            if($pieces[1] == 480 || $pieces[0] != date('Ymd')){
+            if ($pieces[1] == 480 || $pieces[0] != date('Ymd')) {
                 $num = 1;
-            }else{
+            } else {
                 $num = $pieces[1] + 1;
             }
         }
         $num = sprintf("%03d", $num);       // 补齐3位
-        $gameId = date('Ymd').'|'.$num;
+        $gameId = date('Ymd') . '|' . $num;
         Redis::set($key, $gameId);      // 更新当局ID
         // 准别阶段
         $key2 = "GAME_INFO";       // 当局信息
-        $gameInfo = new GameInfo;
+        $gameInfo = json_decode(Redis::get($key2));
+        if ($gameInfo == null) {
+            $gameInfo = new GameInfo();
+        }
         $gameInfo->gameId = $gameId;
         $gameInfo->startTime = UserController::getMillisecond();
-        $gameInfo->status = 1;      // TODO 方便下注测试原来是0
-        $gameInfo->position = $this->getPosition($gameInfo->position);     // 随机获取玩家头像
+        $gameInfo->status = 0;
+        //$gameInfo->position = $this->getPosition($gameInfo->position);     // 随机获取玩家头像
         Redis::set($key2, json_encode($gameInfo));            // 更新Redis
         $key3 = "BETS_INFO";       // 下注信息
         Redis::del($key3);
@@ -49,8 +53,8 @@ class GameController extends Controller
         sleep(5);      // 等待
         // 结算阶段
         $gameCards = GameCards::find($gameId);
-        $cards = json_decode($gameCards["cards"],true);
-        for($i=0;$i<count($gameInfo->position);$i++){
+        $cards = json_decode($gameCards["cards"], true);
+        for ($i = 0; $i < count($gameInfo->position); $i++) {
             $gameInfo->position[$i]["cards"] = json_encode($cards[$i]);
             $gameInfo->position[$i]["point"] = $this->getPoint($cards[$i]);
         }
@@ -68,15 +72,15 @@ class GameController extends Controller
     public function addGameList()
     {
         $constant = new Constant();
-        $data = date("Ymd",strtotime("+1 day"));
+        $data = date("Ymd", strtotime("+1 day"));
         $closeTime = strtotime($data) + 105;
-        for($i = 1;$i <= 480;$i++){
+        for ($i = 1; $i <= 480; $i++) {
             $gameCards = new GameCards;
-            $gameCards->id = $data.'|'.sprintf("%03d", $i);       // 补齐3位;
+            $gameCards->id = $data . '|' . sprintf("%03d", $i);       // 补齐3位;
             $carda = $constant::CARDINDEXS;      // 获取总牌组
             shuffle($carda);     // 随机
-            $carda = array_chunk($carda,5);       // 分割
-            $carda = array_slice($carda,0,10);        // 取前十个
+            $carda = array_chunk($carda, 5);       // 分割
+            $carda = array_slice($carda, 0, 10);        // 取前十个
             $gameCards->cards = $this->sortCards($carda);
             $gameCards->close_time = $closeTime * 1000;
             $gameCards->save();
@@ -91,13 +95,13 @@ class GameController extends Controller
         $constant = new Constant();
         $data = date("Ymd");
         $closeTime = strtotime($data) + 105;
-        for($i = 1;$i <= 480;$i++){
+        for ($i = 1; $i <= 480; $i++) {
             $gameCards = new GameCards;
-            $gameCards->id = $data.'|'.sprintf("%03d", $i);       // 补齐3位;
+            $gameCards->id = $data . '|' . sprintf("%03d", $i);       // 补齐3位;
             $cards = $constant::CARDINDEXS;      // 获取总牌组
             shuffle($cards);     // 随机
-            $cards = array_chunk($cards,5);       // 分割
-            $cards = array_slice($cards,0,10);        // 取前十个
+            $cards = array_chunk($cards, 5);       // 分割
+            $cards = array_slice($cards, 0, 10);        // 取前十个
             $gameCards->cards = $this->sortCards($cards);
             $gameCards->close_time = $closeTime * 1000;
             $gameCards->save();
@@ -107,24 +111,25 @@ class GameController extends Controller
     }
 
     /*把牌按照3|2排序*/
-    public static function sortCards($cards){
+    public static function sortCards($cards)
+    {
         $sortCards = array();
-        foreach ($cards as $card){
+        foreach ($cards as $card) {
             $count = count($card);
-            for($i=0;$i<$count;$i++){
-                $point1 = $card[$i]%100>10?10:$card[$i];
-                for($j=$i+1;$j<$count;$j++){
-                    $point2 = $card[$j]%100>10?10:$card[$j];
-                    for($k=$j+1;$k<$count;$k++){
-                        $point3 = $card[$k]%100>10?10:$card[$k];
-                        if(($point1 + $point2 + $point3)%10 == 0){
-                            $sortCard = array($card[$i],$card[$j],$card[$k]);
-                            $sortCards[] = array_merge($sortCard, array_except($card, [$i,$j,$k]));
+            for ($i = 0; $i < $count; $i++) {
+                $point1 = $card[$i] % 100 > 10 ? 10 : $card[$i];
+                for ($j = $i + 1; $j < $count; $j++) {
+                    $point2 = $card[$j] % 100 > 10 ? 10 : $card[$j];
+                    for ($k = $j + 1; $k < $count; $k++) {
+                        $point3 = $card[$k] % 100 > 10 ? 10 : $card[$k];
+                        if (($point1 + $point2 + $point3) % 10 == 0) {
+                            $sortCard = array($card[$i], $card[$j], $card[$k]);
+                            $sortCards[] = array_merge($sortCard, array_except($card, [$i, $j, $k]));
                             break 3;
                         }
                     }
                 }
-                if($i == $count - 1){
+                if ($i == $count - 1) {
                     $sortCards[] = $card;
                 }
             }
@@ -133,18 +138,19 @@ class GameController extends Controller
     }
 
     /*算点*/
-    private function getPoint($card){
+    private function getPoint($card)
+    {
         $count = count($card);
         $cardPoint = array();
-        for($i=0;$i<$count;$i++){
-            $cardPoint[] = $card[$i]%100>10?10:$card[$i];
+        for ($i = 0; $i < $count; $i++) {
+            $cardPoint[] = $card[$i] % 100 > 10 ? 10 : $card[$i];
         }
-        for($i=0;$i<$count;$i++){
-            for($j=$i+1;$j<$count;$j++){
-                for($k=$j+1;$k<$count;$k++){
-                    if(($cardPoint[$i] + $cardPoint[$j] + $cardPoint[$k])%10 == 0){
-                        $cardPoint = array_except($cardPoint, [$i,$j,$k]);
-                        return array_sum($cardPoint)%10==0?10:array_sum($cardPoint)%10;
+        for ($i = 0; $i < $count; $i++) {
+            for ($j = $i + 1; $j < $count; $j++) {
+                for ($k = $j + 1; $k < $count; $k++) {
+                    if (($cardPoint[$i] + $cardPoint[$j] + $cardPoint[$k]) % 10 == 0) {
+                        $cardPoint = array_except($cardPoint, [$i, $j, $k]);
+                        return array_sum($cardPoint) % 10 == 0 ? 10 : array_sum($cardPoint) % 10;
                     }
                 }
             }
@@ -153,28 +159,29 @@ class GameController extends Controller
     }
 
     /*结算*/
-    private function result($gameInfo){
+    private function result($gameInfo)
+    {
         $key = "BETS_INFO";       // 玩家下注信息
         $allBets = Redis::hgetall($key);
         $bankerPoint = $gameInfo->position[0]["point"];     // 庄家点数
         $bankerResult = 0;      // 庄家输赢
         $pot = 0;       // 总下注数
-        foreach($allBets as $userId=>$value){
+        foreach ($allBets as $userId => $value) {
             $result = 0;        // 玩家输赢
-            $value = json_decode($value,true);
+            $value = json_decode($value, true);
             $double = $value["double"];
             $betnum = 0;      // 玩家下注数
-            for($i=1;$i<=9;$i++){
+            for ($i = 1; $i <= 9; $i++) {
                 $playerPoint = $gameInfo->position[$i]["point"];
-                if($value[$i] == 0){
+                if ($value[$i] == 0) {
                     continue;
                 }
                 $betnum += $value[$i];
                 // 比大小
-                if($playerPoint > $bankerPoint){      // win
-                    $result += $this->getResult($playerPoint,$bankerPoint,$double,$value[$i],true);
-                }elseif ($playerPoint < $bankerPoint){        // lose
-                    $result -= $this->getResult($bankerPoint,$playerPoint,$double,$value[$i],false);
+                if ($playerPoint > $bankerPoint) {      // win
+                    $result += $this->getResult($playerPoint, $bankerPoint, $double, $value[$i], true);
+                } elseif ($playerPoint < $bankerPoint) {        // lose
+                    $result -= $this->getResult($bankerPoint, $playerPoint, $double, $value[$i], false);
                 }
             }
             // 统计游戏信息
@@ -182,7 +189,7 @@ class GameController extends Controller
             $pot += $betnum;
             // 保存玩家下注信息
             $value["result"] = $result;
-            Redis::hset($key,$userId,json_encode($value));
+            Redis::hset($key, $userId, json_encode($value));
             $userbet = new UserBet();
             $userbet->user_id = $userId;
             $userbet->game_id = $gameInfo->gameId;
@@ -192,9 +199,9 @@ class GameController extends Controller
             $userbet->save();
             // 更新玩家信息
             $key2 = "USER_INFO";       // 玩家信息
-            $userInfo = json_decode(Redis::get($key2."|".$userId),true);
+            $userInfo = json_decode(Redis::get($key2 . "|" . $userId), true);
             $userInfo["chips"] += $betnum + $result;        // 返还筹码
-            Redis::set($key2."|".$userId, json_encode($userInfo));
+            Redis::set($key2 . "|" . $userId, json_encode($userInfo));
         }
         $response['bankerResult'] = $bankerResult;
         $response['pot'] = $pot;
@@ -202,59 +209,81 @@ class GameController extends Controller
     }
 
     /*算分*/
-    private function getResult($bigPoint,$smallPoint,$double, $bets, $half){
-        if($double == 1){
-            if($bigPoint == 8){
+    private function getResult($bigPoint, $smallPoint, $double, $bets, $half)
+    {
+        if ($double == 1) {
+            if ($bigPoint == 8) {
                 $bets = $bets * 2;
             }
-            if($bigPoint == 9){
+            if ($bigPoint == 9) {
                 $bets = $bets * 3;
             }
-            if($bigPoint == 10){
+            if ($bigPoint == 10) {
                 $bets = $bets * 4;
             }
         }
-        if($half && $bigPoint == 5 && ($smallPoint == 4 || $smallPoint == 0)){      // 特殊点数庄家赔付一半
-            $bets = $bets/2;
+        if ($half && $bigPoint == 5 && ($smallPoint == 4 || $smallPoint == 0)) {      // 特殊点数庄家赔付一半
+            $bets = $bets / 2;
         }
         return $bets;
     }
 
     /*随机获取玩家头像信息*/
-    private function getPosition($position){
-        $userInfo =  UserInfo::where('headimgurl','<>', 'headimgurl')->inRandomOrder()->take(9) ->get()->toArray();
-        for($i = 1;$i<count($position);$i++){
-            $position[$i]['nickname'] = $userInfo[$i-1]["nickname"];
-            $position[$i]['headimgurl'] = $userInfo[$i-1]["headimgurl"];
+    private function getPosition($position)
+    {
+        $userInfo = UserInfo::where('headimgurl', '<>', 'headimgurl')->inRandomOrder()->take(9)->get()->toArray();
+        for ($i = 1; $i < count($position); $i++) {
+            $position[$i]['nickname'] = $userInfo[$i - 1]["nickname"];
+            $position[$i]['headimgurl'] = $userInfo[$i - 1]["headimgurl"];
         }
         return $position;
     }
 
     /*获取当前牌局信息*/
-    public function getGameInfo(){
+    public function getGameInfo()
+    {
         $response = new ResponseData();
         $key = "GAME_ID";       // 当局ID
         $gameId = Redis::get($key);
         $gameCards = GameCards::find($gameId);
-        $cards = json_decode($gameCards["cards"],true);
+        $cards = json_decode($gameCards["cards"], true);
         $gameInfo['gameId'] = $gameId;
         $gameInfo['cards'] = $cards;
         $pieces = explode("|", $gameId);
-        if($pieces[1] == 480 || $pieces[0] != date('Ymd')){
+        if ($pieces[1] == 480 || $pieces[0] != date('Ymd')) {
             $num = 1;
-        }else{
+        } else {
             $num = $pieces[1] + 1;
         }
         $num = sprintf("%03d", $num);       // 补齐3位
-        $nextGameId = date('Ymd').'|'.$num;
+        $nextGameId = date('Ymd') . '|' . $num;
         $gameInfo['nextGameId'] = $nextGameId;
         $response->data = $gameInfo;
         return json_encode($response);
     }
 
     /*更改座位玩家头像*/
-    public function changeIcon(){
-        echo 1;
+    public function changeIcon()
+    {
+        $key2 = "GAME_INFO";       // 当局信息
+        $gameInfo = json_decode(Redis::get($key2), true);
+        if ($gameInfo == null) {
+            return;
+        }
+        $userInfo = UserInfo::inRandomOrder()->take(50)->get()->toArray();
+        for ($i = 1; $i < count($gameInfo['position']); $i++) {
+            if ($gameInfo['status'] == 2) {       // 已结算
+                $p = 1;     // 概率
+            } else {      // 未结算
+                $p = 3;
+            }
+            $rand = rand(1, 10);
+            if ($rand <= $p) {
+                $gameInfo['position'][$i] = $this->changeIconf($i, $gameInfo, $userInfo);
+            }
+            $position[$i]['nickname'] = $userInfo[$i - 1]["nickname"];
+            $position[$i]['headimgurl'] = $userInfo[$i - 1]["headimgurl"];
+        }
         sleep(10);
         echo 2;
         sleep(10);
@@ -266,6 +295,12 @@ class GameController extends Controller
         sleep(10);
         echo 6;
     }
+
+    private function changeIconf($i, $gameInfo, $userInfo)
+    {
+        $headimgurl = array_column($gameInfo['position'], 'headimgurl');
+    }
+
 
 }
 

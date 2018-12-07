@@ -96,14 +96,14 @@ class UserController extends Controller
     public function getGameInfo(Request $request)
     {
         $response = new ResponseData();
-/*        $key = "USER_INFO";       // 玩家信息
-        $userId = 106;//$request->session()->get('userId');
-        $userInfo = json_decode(Redis::get($key . "|" . $userId), true);
-        if ($userInfo == null) {
-            $response->result = false;
-            $response->message = "请先登录";
-            return json_encode($response);
-        }*/
+        /*        $key = "USER_INFO";       // 玩家信息
+                $userId = 106;//$request->session()->get('userId');
+                $userInfo = json_decode(Redis::get($key . "|" . $userId), true);
+                if ($userInfo == null) {
+                    $response->result = false;
+                    $response->message = "请先登录";
+                    return json_encode($response);
+                }*/
         $key2 = "GAME_INFO";       // 当局信息
         $gameInfo = json_decode(Redis::get($key2), true);
         if ($gameInfo == null) {
@@ -111,16 +111,16 @@ class UserController extends Controller
             $response->message = "牌局错误";
             return json_encode($response);
         }
-/*        for ($i = 0; $i < count($gameInfo["position"]); $i++) {
-            if ($gameInfo["position"][$i]["nickname"] == $userInfo["nickname"]) {
-                break;
-            }
-            if (blank($gameInfo["position"][$i]["nickname"])) {
-                $gameInfo["position"][$i]["nickname"] = $userInfo["nickname"];
-                $gameInfo["position"][$i]["headimgurl"] = $userInfo["headimgurl"];
-                break;
-            }
-        }*/
+        /*        for ($i = 0; $i < count($gameInfo["position"]); $i++) {
+                    if ($gameInfo["position"][$i]["nickname"] == $userInfo["nickname"]) {
+                        break;
+                    }
+                    if (blank($gameInfo["position"][$i]["nickname"])) {
+                        $gameInfo["position"][$i]["nickname"] = $userInfo["nickname"];
+                        $gameInfo["position"][$i]["headimgurl"] = $userInfo["headimgurl"];
+                        break;
+                    }
+                }*/
         $gameInfo["nowTime"] = $this->getMillisecond();
         Redis::set($key2, json_encode($gameInfo));
         $response->data = $gameInfo;
@@ -336,14 +336,14 @@ class UserController extends Controller
         $imgBase64Code = null;
         if ($code == 200) {     // 把URL格式的图片转成base64_encode格式的！
             $imgBase64Code = "data:image/jpeg;base64," . base64_encode($data);
-        }else{
+        } else {
             $response->data = "error1";
             return json_encode($response);
         }
         if (preg_match('/^(data:\s*image\/(\w+);base64,)/', $imgBase64Code, $result)) {
             $new_file = "{$savaUri}/niuniu_{$uid}.png";
             file_put_contents($new_file, base64_decode(str_replace($result[1], '', $imgBase64Code)));
-        }else{
+        } else {
             $response->data = "error2";
             return json_encode($response);
         }
