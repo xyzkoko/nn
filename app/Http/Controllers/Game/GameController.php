@@ -35,11 +35,8 @@ class GameController extends Controller
         Redis::set($idKey, $gameId);      // 更新当局ID
         // 准别阶段
         $gameKey = "GAME_INFO";       // 当局信息
+        Redis::set($gameKey, json_encode(new GameInfo()));
         $gameInfo = json_decode(Redis::get($gameKey),true);
-        if ($gameInfo == null) {
-            Redis::set($gameKey, json_encode(new GameInfo()));
-            $gameInfo = json_decode(Redis::get($gameKey),true);
-        }
         $gameInfo['gameId'] = $gameId;
         $gameInfo['startTime'] = UserController::getMillisecond();
         $gameInfo['status'] = 0;
