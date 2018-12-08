@@ -288,6 +288,9 @@ class GameController extends Controller
         }
         $GameKey = "GAME_INFO";       // 当局信息
         $gameInfo = json_decode(Redis::get($GameKey),true);
+        if($gameInfo == null){      // 游戏未开始
+            return $userInfCcolumn;
+        }
         for ($i = 1; $i < 10; $i++) {
             if ($gameInfo['status'] == 2) {       // 已结算
                 $p = 1;     // 概率
