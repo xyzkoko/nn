@@ -47,11 +47,11 @@ class GameController extends Controller
         Redis::set($gameKey, json_encode($gameInfo));            // 更新Redis
         $betsKey = "BETS_INFO";       // 下注信息
         Redis::del($betsKey);
-        //sleep(105);      // 等待
+        sleep(105);      // 等待
         // 下注阶段
         $gameInfo['status'] = 1;
         Redis::set($gameKey, json_encode($gameInfo));            // 更新Redis
-        //sleep(5);      // 等待
+        sleep(30);      // 等待
         // 结算阶段
         $gameCards = GameCards::find($gameId);
         $cards = json_decode($gameCards["cards"], true);
