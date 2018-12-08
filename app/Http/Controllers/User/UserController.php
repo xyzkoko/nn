@@ -17,7 +17,7 @@ class UserController extends Controller
     {
         $response = new ResponseData();
         // 测试登录
-        $key = "USER_INFO";
+        $userKey = "USER_INFO";
         $userId = $request->session()->get('userId');
         if (blank($userId)) {     // 新用户
             $userInfo = new UserInfo();
@@ -30,7 +30,7 @@ class UserController extends Controller
             $userInfo->save();
             $request->session()->put('userId', $userInfo->id);
         } else {
-            $userInfo = json_decode(Redis::get($key . "|" . $userId), true);
+            $userInfo = json_decode(Redis::get($userKey . "|" . $userId), true);
             if (blank($userInfo)) {
                 $userInfo = UserInfo::where('id', $userId)->first();
                 if (blank($userInfo)) {
@@ -40,13 +40,13 @@ class UserController extends Controller
             }
         }
         $userInfo['chips'] = 10000;
-        //Redis::setex($key."|".$userInfo['id'], 7200,json_encode($userInfo));
-        Redis::set($key . "|" . $userInfo['id'], json_encode($userInfo));
+        //Redis::setex($userKey."|".$userInfo['id'], 7200,json_encode($userInfo));
+        Redis::set($userKey . "|" . $userInfo['id'], json_encode($userInfo));
         $response->data = $userInfo;
         return json_encode($response);
         exit;
         // 微信登录
-        $key = "USER_INFO";
+        $userKey = "USER_INFO";
         $userId = $request->session()->get('userId');
         if (blank($userId)) {     // 新用户
             $weiChatController = new WeiChatController();
@@ -76,7 +76,7 @@ class UserController extends Controller
             }
             $request->session()->put('userId', $userInfo->id);
         } else {
-            $userInfo = json_decode(Redis::get($key . "|" . $userId), true);
+            $userInfo = json_decode(Redis::get($userKey . "|" . $userId), true);
             if (blank($userInfo)) {
                 $userInfo = UserInfo::where('id', $userId)->first();
                 if (blank($userInfo)) {
@@ -86,8 +86,8 @@ class UserController extends Controller
             }
         }
         $userInfo['chips'] = 10000;       // TODO 筹码跟服务器要
-        //Redis::setex($key."|".$userInfo['id'],7200, json_encode($userInfo));
-        Redis::set($key . "|" . $userInfo['id'], json_encode($userInfo));
+        //Redis::setex($userKey."|".$userInfo['id'],7200, json_encode($userInfo));
+        Redis::set($userKey . "|" . $userInfo['id'], json_encode($userInfo));
         $response->data = $userInfo;
         return json_encode($response);
     }
@@ -96,33 +96,20 @@ class UserController extends Controller
     public function getGameInfo(Request $request)
     {
         $response = new ResponseData();
-        /*        $key = "USER_INFO";       // 玩家信息
-                $userId = 106;//$request->session()->get('userId');
-                $userInfo = json_decode(Redis::get($key . "|" . $userId), true);
-                if ($userInfo == null) {
-                    $response->result = false;
-                    $response->message = "请先登录";
-                    return json_encode($response);
-                }*/
-        $key2 = "GAME_INFO";       // 当局信息
-        $gameInfo = json_decode(Redis::get($key2), true);
+        $gameKey = "GAME_INFO";       // 当局信息
+        $gameInfo = json_decode(Redis::get($gameKey), true);
         if ($gameInfo == null) {
             $response->result = false;
             $response->message = "牌局错误";
             return json_encode($response);
         }
-        /*        for ($i = 0; $i < count($gameInfo["position"]); $i++) {
-                    if ($gameInfo["position"][$i]["nickname"] == $userInfo["nickname"]) {
-                        break;
-                    }
-                    if (blank($gameInfo["position"][$i]["nickname"])) {
-                        $gameInfo["position"][$i]["nickname"] = $userInfo["nickname"];
-                        $gameInfo["position"][$i]["headimgurl"] = $userInfo["headimgurl"];
-                        break;
-                    }
-                }*/
         $gameInfo["nowTime"] = $this->getMillisecond();
-        Redis::set($key2, json_encode($gameInfo));
+        $iconKey = "ICON_INFO";       // 在线用户信息
+        $iconInfo = json_decode(Redis::get($iconKey), true);
+        for ($i = 1; $i < count($gameInfo["position"]); $i++) {
+            $gameInfo["position"][$i]["headimgurl"] = $iconInfo[$i]["headimgurl"];
+            $gameInfo["position"][$i]["nickname"] = $iconInfo[$i]["nickname"];
+        }
         $response->data = $gameInfo;
         return json_encode($response);
     }
@@ -131,9 +118,9 @@ class UserController extends Controller
     public function getUserInfo(Request $request)
     {
         $response = new ResponseData();
-        $key = "USER_INFO";       // 玩家信息
+        $userKey = "USER_INFO";       // 玩家信息
         $userId = $request->session()->get('userId');
-        $userInfo = json_decode(Redis::get($key . "|" . $userId), true);
+        $userInfo = json_decode(Redis::get($userKey . "|" . $userId), true);
         if ($userInfo == null) {
             $response->result = false;
             $response->message = "请先登录";
@@ -147,9 +134,9 @@ class UserController extends Controller
     public function getBets(Request $request)
     {
         $response = new ResponseData();
-        $key = "BETS_INFO";       // 下注信息
+        $betsKey = "BETS_INFO";       // 下注信息
         $userId = $request->session()->get('userId');
-        $bets = json_decode(Redis::hget($key, $userId), true);
+        $bets = json_decode(Redis::hget($betsKey, $userId), true);
         if (blank($bets)) {
             $constant = new Constant();
             $bets = $constant::BETS;
@@ -170,24 +157,24 @@ class UserController extends Controller
             $response->message = "参数错误";
             return json_encode($response);
         }
-        $key = "GAME_INFO";       // 当局信息
-        $gameInfo = json_decode(Redis::get($key), true);
+        $gameKey = "GAME_INFO";       // 当局信息
+        $gameInfo = json_decode(Redis::get($gameKey), true);
         if (blank($gameInfo) || $gameInfo['status'] != 1) {
             $response->result = false;
             $response->message = "非下注时间";
             return json_encode($response);
         }
-        $key2 = "USER_INFO";       // 玩家信息
+        $userKey = "USER_INFO";       // 玩家信息
         $userId = $request->session()->get('userId');
-        $userInfo = json_decode(Redis::get($key2 . "|" . $userId), true);
+        $userInfo = json_decode(Redis::get($userKey . "|" . $userId), true);
         if ($userInfo == null) {
             $response->result = false;
             $response->message = "请先登录";
             return json_encode($response);
         }
         // 保存下注信息
-        $key3 = "BETS_INFO";       // 玩家信息
-        $bets = json_decode(Redis::hget($key3, $userId), true);
+        $betsKey = "BETS_INFO";       // 玩家信息
+        $bets = json_decode(Redis::hget($betsKey, $userId), true);
         if (blank($bets)) {
             $constant = new Constant();
             $bets = $constant::BETS;
@@ -214,9 +201,9 @@ class UserController extends Controller
             $response->message = "筹码不足";
             return json_encode($response);
         }
-        Redis::hset($key3, $userId, json_encode($bets));
+        Redis::hset($betsKey, $userId, json_encode($bets));
         $userInfo["chips"] -= $allBetVal;
-        Redis::set($key2 . "|" . $userId, json_encode($userInfo));
+        Redis::set($userKey . "|" . $userId, json_encode($userInfo));
         return $this->getBets($request);
     }
 
@@ -278,9 +265,9 @@ class UserController extends Controller
         $response = new ResponseData();
         $startDate = $request->input('startDate');       // 查询开始日期|001
         $endDate = $request->input('endDate');       // 查询结束日期|460
-        $key = "USER_INFO";       // 玩家信息
+        $userKey = "USER_INFO";       // 玩家信息
         $userId = $request->session()->get('userId');
-        $userInfo = json_decode(Redis::get($key . "|" . $userId), true);
+        $userInfo = json_decode(Redis::get($userKey . "|" . $userId), true);
         if ($userInfo == null) {
             $response->result = false;
             $response->message = "请先登录";
@@ -296,9 +283,9 @@ class UserController extends Controller
     {
         $response = new ResponseData();
         $date = $request->input('date');       // 查询开始日期
-        $key = "USER_INFO";       // 玩家信息
+        $userKey = "USER_INFO";       // 玩家信息
         $userId = $request->session()->get('userId');
-        $userInfo = json_decode(Redis::get($key . "|" . $userId), true);
+        $userInfo = json_decode(Redis::get($userKey . "|" . $userId), true);
         if ($userInfo == null) {
             $response->result = false;
             $response->message = "请先登录";

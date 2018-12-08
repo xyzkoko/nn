@@ -22,6 +22,7 @@ Route::group(['namespace' => 'Game'], function(){
     Route::post('/game/add', 'GameController@addGameList');
     Route::get('/game/add', 'GameController@addTodayGameList');
     Route::get('/game/gameInfo', 'GameController@getGameInfo');
+    Route::get('/game/icon', 'GameController@changeIcon');
 });
 
 Route::group(['namespace' => 'User'], function(){

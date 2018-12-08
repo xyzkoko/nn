@@ -18,8 +18,8 @@ class GameController extends Controller
     public function startGame()
     {
         set_time_limit(180);
-        $key = "GAME_ID";       // 当局ID
-        $gameId = Redis::get($key);
+        $idKey = "GAME_ID";       // 当局ID
+        $gameId = Redis::get($idKey);
         if (blank($gameId)) {
             $num = 1;
         } else {
@@ -32,34 +32,35 @@ class GameController extends Controller
         }
         $num = sprintf("%03d", $num);       // 补齐3位
         $gameId = date('Ymd') . '|' . $num;
-        Redis::set($key, $gameId);      // 更新当局ID
+        Redis::set($idKey, $gameId);      // 更新当局ID
         // 准别阶段
-        $key2 = "GAME_INFO";       // 当局信息
-        $gameInfo = json_decode(Redis::get($key2));
+        $gameKey = "GAME_INFO";       // 当局信息
+        $gameInfo = json_decode(Redis::get($gameKey),true);
         if ($gameInfo == null) {
-            $gameInfo = new GameInfo();
+            Redis::set($gameKey, json_encode(new GameInfo()));
+            $gameInfo = json_decode(Redis::get($gameKey),true);
         }
-        $gameInfo->gameId = $gameId;
-        $gameInfo->startTime = UserController::getMillisecond();
-        $gameInfo->status = 0;
-        //$gameInfo->position = $this->getPosition($gameInfo->position);     // 随机获取玩家头像
-        Redis::set($key2, json_encode($gameInfo));            // 更新Redis
-        $key3 = "BETS_INFO";       // 下注信息
-        Redis::del($key3);
-        sleep(105);      // 等待
+        $gameInfo['gameId'] = $gameId;
+        $gameInfo['startTime'] = UserController::getMillisecond();
+        $gameInfo['status'] = 0;
+        //$gameInfo['position'] = $this->getPosition($gameInfo['position']);     // 随机获取玩家头像
+        Redis::set($gameKey, json_encode($gameInfo));            // 更新Redis
+        $betsKey = "BETS_INFO";       // 下注信息
+        Redis::del($betsKey);
+        //sleep(105);      // 等待
         // 下注阶段
-        $gameInfo->status = 1;
-        Redis::set($key2, json_encode($gameInfo));            // 更新Redis
-        sleep(5);      // 等待
+        $gameInfo['status'] = 1;
+        Redis::set($gameKey, json_encode($gameInfo));            // 更新Redis
+        //sleep(5);      // 等待
         // 结算阶段
         $gameCards = GameCards::find($gameId);
         $cards = json_decode($gameCards["cards"], true);
-        for ($i = 0; $i < count($gameInfo->position); $i++) {
-            $gameInfo->position[$i]["cards"] = json_encode($cards[$i]);
-            $gameInfo->position[$i]["point"] = $this->getPoint($cards[$i]);
+        for ($i = 0; $i < count($gameInfo['position']); $i++) {
+            $gameInfo['position'][$i]['cards'] = json_encode($cards[$i]);
+            $gameInfo['position'][$i]['point'] = $this->getPoint($cards[$i]);
         }
-        $gameInfo->status = 2;
-        Redis::set($key2, json_encode($gameInfo));      // 更新Redis
+        $gameInfo['status'] = 2;
+        Redis::set($gameKey, json_encode($gameInfo));      // 更新Redis
         $result = $this->result($gameInfo);     // 总收入
         $gameCards->status = 2;
         $gameCards->pot = $result['pot'];      // 总下注数
@@ -161,9 +162,9 @@ class GameController extends Controller
     /*结算*/
     private function result($gameInfo)
     {
-        $key = "BETS_INFO";       // 玩家下注信息
-        $allBets = Redis::hgetall($key);
-        $bankerPoint = $gameInfo->position[0]["point"];     // 庄家点数
+        $betsKey = "BETS_INFO";       // 玩家下注信息
+        $allBets = Redis::hgetall($betsKey);
+        $bankerPoint = $gameInfo['position'][0]['point'];     // 庄家点数
         $bankerResult = 0;      // 庄家输赢
         $pot = 0;       // 总下注数
         foreach ($allBets as $userId => $value) {
@@ -172,7 +173,7 @@ class GameController extends Controller
             $double = $value["double"];
             $betnum = 0;      // 玩家下注数
             for ($i = 1; $i <= 9; $i++) {
-                $playerPoint = $gameInfo->position[$i]["point"];
+                $playerPoint = $gameInfo['position'][$i]['point'];
                 if ($value[$i] == 0) {
                     continue;
                 }
@@ -189,19 +190,19 @@ class GameController extends Controller
             $pot += $betnum;
             // 保存玩家下注信息
             $value["result"] = $result;
-            Redis::hset($key, $userId, json_encode($value));
+            Redis::hset($betsKey, $userId, json_encode($value));
             $userbet = new UserBet();
             $userbet->user_id = $userId;
-            $userbet->game_id = $gameInfo->gameId;
+            $userbet->game_id = $gameInfo['gameId'];
             $userbet->bets = json_encode($value);
             $userbet->betnum = $betnum;
             $userbet->result = $result;
             $userbet->save();
             // 更新玩家信息
-            $key2 = "USER_INFO";       // 玩家信息
-            $userInfo = json_decode(Redis::get($key2 . "|" . $userId), true);
+            $userKey = "USER_INFO";       // 玩家信息
+            $userInfo = json_decode(Redis::get($userKey . "|" . $userId), true);
             $userInfo["chips"] += $betnum + $result;        // 返还筹码
-            Redis::set($key2 . "|" . $userId, json_encode($userInfo));
+            Redis::set($userKey . "|" . $userId, json_encode($userInfo));
         }
         $response['bankerResult'] = $bankerResult;
         $response['pot'] = $pot;
@@ -243,8 +244,8 @@ class GameController extends Controller
     public function getGameInfo()
     {
         $response = new ResponseData();
-        $key = "GAME_ID";       // 当局ID
-        $gameId = Redis::get($key);
+        $idKey = "GAME_ID";       // 当局ID
+        $gameId = Redis::get($idKey);
         $gameCards = GameCards::find($gameId);
         $cards = json_decode($gameCards["cards"], true);
         $gameInfo['gameId'] = $gameId;
@@ -265,40 +266,53 @@ class GameController extends Controller
     /*更改座位玩家头像*/
     public function changeIcon()
     {
-        $key2 = "GAME_INFO";       // 当局信息
-        $gameInfo = json_decode(Redis::get($key2), true);
-        if ($gameInfo == null) {
-            return;
-        }
+        set_time_limit(60);
         $userInfo = UserInfo::inRandomOrder()->take(50)->get()->toArray();
-        for ($i = 1; $i < count($gameInfo['position']); $i++) {
+        $userInfCcolumn = array_column($userInfo, 'nickname','headimgurl');        // 头像集合
+        $userInfCcolumn = $this->changeIconImpl($userInfCcolumn);
+        sleep(10);
+        $userInfCcolumn = $this->changeIconImpl($userInfCcolumn);
+        sleep(10);
+        $userInfCcolumn = $this->changeIconImpl($userInfCcolumn);
+        sleep(10);
+        $userInfCcolumn = $this->changeIconImpl($userInfCcolumn);
+        sleep(10);
+        $userInfCcolumn = $this->changeIconImpl($userInfCcolumn);
+        sleep(10);
+        $this->changeIconImpl($userInfCcolumn);
+    }
+
+    private function changeIconImpl($userInfCcolumn)
+    {
+        $iconKey = "ICON_INFO";       // 在线用户信息
+        $iconInfo = json_decode(Redis::get($iconKey), true);
+        if ($iconInfo == null) {
+            $iconInfo = [null,null,null,null,null,null,null,null,null,null];
+        }
+        $GameKey = "GAME_INFO";       // 当局信息
+        $gameInfo = json_decode(Redis::get($GameKey),true);
+        for ($i = 1; $i < 10; $i++) {
             if ($gameInfo['status'] == 2) {       // 已结算
                 $p = 1;     // 概率
             } else {      // 未结算
                 $p = 3;
             }
             $rand = rand(1, 10);
-            if ($rand <= $p) {
-                $gameInfo['position'][$i] = $this->changeIconf($i, $gameInfo, $userInfo);
+            if (blank($iconInfo[$i]) || $rand <= $p) {      // 换座位
+                $iconInfoCcolumn = array_column($iconInfo, 'nickname','headimgurl');        // 在线头像集合
+                $userInfCcolumn = array_diff_key($userInfCcolumn,$iconInfoCcolumn);     // 取差集
+                if(count($userInfCcolumn) == 0){
+                    return $userInfCcolumn;
+                }
+                reset($userInfCcolumn);
+                $key = key($userInfCcolumn);
+                $iconInfo[$i]['nickname'] = $userInfCcolumn[$key];
+                $iconInfo[$i]['headimgurl'] = $key;
+                unset($userInfCcolumn[$key]);
             }
-            $position[$i]['nickname'] = $userInfo[$i - 1]["nickname"];
-            $position[$i]['headimgurl'] = $userInfo[$i - 1]["headimgurl"];
         }
-        sleep(10);
-        echo 2;
-        sleep(10);
-        echo 3;
-        sleep(10);
-        echo 4;
-        sleep(10);
-        echo 5;
-        sleep(10);
-        echo 6;
-    }
-
-    private function changeIconf($i, $gameInfo, $userInfo)
-    {
-        $headimgurl = array_column($gameInfo['position'], 'headimgurl');
+        Redis::set($iconKey,json_encode($iconInfo));
+        return $userInfCcolumn;
     }
 
 
