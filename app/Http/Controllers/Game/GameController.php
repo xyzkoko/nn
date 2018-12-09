@@ -247,7 +247,7 @@ class GameController extends Controller
         $gameKey = "GAME_INFO";       // 当局信息
         $gameInfo = json_decode(Redis::get($gameKey),true);
         for($i = 0;$i < 10;$i++){
-            $data['cards'][] = $gameInfo['position']['cards'];
+            $data['cards'][] = $gameInfo['position'][$i]['cards'];
         }
         $pieces = explode("|", $gameId);
         if ($pieces[1] == 480 || $pieces[0] != date('Ymd')) {
