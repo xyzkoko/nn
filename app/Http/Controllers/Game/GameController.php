@@ -243,10 +243,12 @@ class GameController extends Controller
         $response = new ResponseData();
         $idKey = "GAME_ID";       // 当局ID
         $gameId = Redis::get($idKey);
-        $gameCards = GameCards::find($gameId);
-        $cards = json_decode($gameCards["cards"], true);
-        $gameInfo['gameId'] = $gameId;
-        $gameInfo['cards'] = $cards;
+        $data['gameId'] = $gameId;
+        $gameKey = "GAME_INFO";       // 当局信息
+        $gameInfo = json_decode(Redis::get($gameKey),true);
+        for($i = 0;$i < 10;$i++){
+            $data['cards'][] = $gameInfo['position']['cards'];
+        }
         $pieces = explode("|", $gameId);
         if ($pieces[1] == 480 || $pieces[0] != date('Ymd')) {
             $num = 1;
@@ -255,8 +257,8 @@ class GameController extends Controller
         }
         $num = sprintf("%03d", $num);       // 补齐3位
         $nextGameId = date('Ymd') . '|' . $num;
-        $gameInfo['nextGameId'] = $nextGameId;
-        $response->data = $gameInfo;
+        $data['nextGameId'] = $nextGameId;
+        $response->data = $data;
         return json_encode($response);
     }
 
