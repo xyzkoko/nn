@@ -40,6 +40,7 @@ class GameController extends Controller
         $gameInfo['gameId'] = $gameId;
         $gameInfo['startTime'] = UserController::getMillisecond();
         $gameInfo['status'] = 0;
+        $gameInfo['dice'] = array(rand(1,6),rand(1,6),rand(1,6));
         //$gameInfo['position'] = $this->getPosition($gameInfo['position']);     // 随机获取玩家头像
         Redis::set($gameKey, json_encode($gameInfo));            // 更新Redis
         $betsKey = "BETS_INFO";       // 下注信息
