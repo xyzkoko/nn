@@ -36,7 +36,7 @@ class GameController extends Controller
         // 准别阶段
         $gameKey = "GAME_INFO";       // 当局信息
         Redis::set($gameKey, json_encode(new GameInfo()));
-        $gameInfo = json_decode(Redis::get($gameKey),true);
+        $gameInfo = json_decode(Redis::get($gameKey), true);
         $gameInfo['gameId'] = $gameId;
         $gameInfo['startTime'] = UserController::getMillisecond();
         $gameInfo['status'] = 0;
@@ -54,7 +54,7 @@ class GameController extends Controller
         $cards = json_decode($gameCards["cards"], true);
         for ($i = 0; $i < count($gameInfo['position']); $i++) {
             $gameInfo['position'][$i]['cards'] = json_encode($cards[$i]);
-            $gameInfo['position'][$i]['point'] = $this->getPoint($cards[$i]);
+            $gameInfo['position'][$i]['point'] = $this::getPoint($cards[$i]);
         }
         $gameInfo['status'] = 2;
         Redis::set($gameKey, json_encode($gameInfo));      // 更新Redis
@@ -136,7 +136,7 @@ class GameController extends Controller
     }
 
     /*算点*/
-    private function getPoint($card)
+    public static function getPoint($card)
     {
         $count = count($card);
         $cardPoint = array();
@@ -245,9 +245,10 @@ class GameController extends Controller
         $gameId = Redis::get($idKey);
         $data['gameId'] = $gameId;
         $gameKey = "GAME_INFO";       // 当局信息
-        $gameInfo = json_decode(Redis::get($gameKey),true);
-        for($i = 0;$i < 10;$i++){
+        $gameInfo = json_decode(Redis::get($gameKey), true);
+        for ($i = 0; $i < 10; $i++) {
             $data['cards'][] = $gameInfo['position'][$i]['cards'];
+            $data['point'][] = $gameInfo['position'][$i]['point'];
         }
         $pieces = explode("|", $gameId);
         if ($pieces[1] == 480 || $pieces[0] != date('Ymd')) {
@@ -267,7 +268,7 @@ class GameController extends Controller
     {
         set_time_limit(60);
         $userInfo = UserInfo::inRandomOrder()->take(50)->get()->toArray();
-        $userInfCcolumn = array_column($userInfo, 'nickname','headimgurl');        // 头像集合
+        $userInfCcolumn = array_column($userInfo, 'nickname', 'headimgurl');        // 头像集合
         $userInfCcolumn = $this->changeIconImpl($userInfCcolumn);
         sleep(10);
         $userInfCcolumn = $this->changeIconImpl($userInfCcolumn);
@@ -286,11 +287,11 @@ class GameController extends Controller
         $iconKey = "ICON_INFO";       // 在线用户信息
         $iconInfo = json_decode(Redis::get($iconKey), true);
         if ($iconInfo == null) {
-            $iconInfo = [null,null,null,null,null,null,null,null,null,null];
+            $iconInfo = [null, null, null, null, null, null, null, null, null, null];
         }
         $GameKey = "GAME_INFO";       // 当局信息
-        $gameInfo = json_decode(Redis::get($GameKey),true);
-        if($gameInfo == null){      // 游戏未开始
+        $gameInfo = json_decode(Redis::get($GameKey), true);
+        if ($gameInfo == null) {      // 游戏未开始
             return $userInfCcolumn;
         }
         for ($i = 1; $i < 10; $i++) {
@@ -301,9 +302,9 @@ class GameController extends Controller
             }
             $rand = rand(1, 10);
             if (blank($iconInfo[$i]) || $rand <= $p) {      // 换座位
-                $iconInfoCcolumn = array_column($iconInfo, 'nickname','headimgurl');        // 在线头像集合
-                $userInfCcolumn = array_diff_key($userInfCcolumn,$iconInfoCcolumn);     // 取差集
-                if(count($userInfCcolumn) == 0){
+                $iconInfoCcolumn = array_column($iconInfo, 'nickname', 'headimgurl');        // 在线头像集合
+                $userInfCcolumn = array_diff_key($userInfCcolumn, $iconInfoCcolumn);     // 取差集
+                if (count($userInfCcolumn) == 0) {
                     return $userInfCcolumn;
                 }
                 reset($userInfCcolumn);
@@ -313,7 +314,7 @@ class GameController extends Controller
                 unset($userInfCcolumn[$key]);
             }
         }
-        Redis::set($iconKey,json_encode($iconInfo));
+        Redis::set($iconKey, json_encode($iconInfo));
         return $userInfCcolumn;
     }
 
