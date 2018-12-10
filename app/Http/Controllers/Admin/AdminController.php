@@ -42,9 +42,15 @@ class AdminController extends Controller
         Redis::setex($uuid, 1800, $adminId);     // 刷新uuid有效期
         $startDate = $request->input('startDate');       // 查询开始日期|001
         $endDate = $request->input('endDate');       // 查询结束日期|460
-        $gameCards = GameCards::whereBetween('id', [$startDate, $endDate])->get();
-        for ($i = 0; $i < 10; $i++) {
-            $gameCards['point'][] = GameController::getPoint($gameCards['cards'][$i]);
+        $gameCards = GameCards::whereBetween('id', [$startDate, $endDate])->get()->toArray();
+        if(count($gameCards) != 0){
+            for($i = 0;$i<count($gameCards);$i++){
+                $cards = json_decode($gameCards[$i]['cards'],true);
+                for ($j = 0; $j < count($cards); $j++) {
+                    $gameCards[$i]['points'][] = GameController::getPoint($cards[$j]);
+                }
+            }
+
         }
         $response->data = $gameCards;
         return json_encode($response);

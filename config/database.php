@@ -109,13 +109,13 @@ return [
         'client' => 'predis',
 
         'default' => [
-            'host' => env('REDIS_HOST', '192.168.1.190'),
+            'host' => env('REDIS_HOST', '192.168.1.189'),
             'password' => env('REDIS_PASSWORD', 'accgame'),
             'port' => env('REDIS_PORT', 6379),
             'database' => env('REDIS_DB', 6),
         ],
         'session' => [
-            'host' => env('REDIS_HOST', '192.168.1.190'),
+            'host' => env('REDIS_HOST', '192.168.1.189'),
             'password' => env('REDIS_PASSWORD', 'accgame'),
             'port' => env('REDIS_PORT', 6379),
             'database' => env('REDIS_DB', 7),
