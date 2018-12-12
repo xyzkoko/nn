@@ -40,7 +40,7 @@ class GameController extends Controller
         $gameInfo['gameId'] = $gameId;
         $gameInfo['startTime'] = UserController::getMillisecond();
         $gameInfo['status'] = 0;
-        $gameInfo['dice'] = array(rand(1,6),rand(1,6),rand(1,6));
+        $gameInfo['dice'] = array(rand(1, 6), rand(1, 6), rand(1, 6));
         //$gameInfo['position'] = $this->getPosition($gameInfo['position']);     // 随机获取玩家头像
         Redis::set($gameKey, json_encode($gameInfo));            // 更新Redis
         $betsKey = "BETS_INFO";       // 下注信息
@@ -49,7 +49,7 @@ class GameController extends Controller
         // 下注阶段
         $gameInfo['status'] = 1;
         Redis::set($gameKey, json_encode($gameInfo));            // 更新Redis
-        sleep(30);      // 等待
+        sleep(40);      // 等待
         // 结算阶段
         $gameCards = GameCards::find($gameId);
         $cards = json_decode($gameCards["cards"], true);
@@ -243,22 +243,23 @@ class GameController extends Controller
     {
         $response = new ResponseData();
         $idKey = "GAME_ID";       // 当局ID
-        $gameId = Redis::get($idKey);
-        $data['gameId'] = $gameId;
-        $gameKey = "GAME_INFO";       // 当局信息
-        $gameInfo = json_decode(Redis::get($gameKey), true);
-        for ($i = 0; $i < 10; $i++) {
-            $data['cards'][] = $gameInfo['position'][$i]['cards'];
-            $data['point'][] = $gameInfo['position'][$i]['point'];
-        }
-        $pieces = explode("|", $gameId);
-        if ($pieces[1] == 480 || $pieces[0] != date('Ymd')) {
-            $num = 1;
+        $nextGameId = Redis::get($idKey);
+        $pieces = explode("|", $nextGameId);
+        if ($pieces[1] == "001") {
+            $date = date('Ymd', strtotime("-1 day"));
+            $num = 480;
         } else {
-            $num = $pieces[1] + 1;
+            $date = $pieces[0];
+            $num = $pieces[1] - 1;
         }
         $num = sprintf("%03d", $num);       // 补齐3位
-        $nextGameId = date('Ymd') . '|' . $num;
+        $gameId = $date . '|' . $num;
+        $gameCards = GameCards::find($gameId)->toArray();
+        $cards = $data['cards'] = json_decode($gameCards['cards'], true);
+        for ($j = 0; $j < count($cards); $j++) {
+            $data['points'][] = GameController::getPoint($cards[$j]);
+        }
+        $data['gameId'] = $gameId;
         $data['nextGameId'] = $nextGameId;
         $response->data = $data;
         return json_encode($response);
