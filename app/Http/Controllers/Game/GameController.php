@@ -19,17 +19,9 @@ class GameController extends Controller
     {
         set_time_limit(180);
         $idKey = "GAME_ID";       // 当局ID
-        $gameId = Redis::get($idKey);
-        if (blank($gameId)) {
-            $num = 1;
-        } else {
-            $pieces = explode("|", $gameId);
-            if ($pieces[1] == 480 || $pieces[0] != date('Ymd')) {
-                $num = 1;
-            } else {
-                $num = $pieces[1] + 1;
-            }
-        }
+        $hour = date('H');
+        $minute = date('i');
+        $num = intval(($hour * 60 + $minute) / 3) + 1;
         $num = sprintf("%03d", $num);       // 补齐3位
         $gameId = date('Ymd') . '|' . $num;
         Redis::set($idKey, $gameId);      // 更新当局ID
